@@ -5,6 +5,14 @@
 * 由于不会java，且又是用java写的，代码太烂，就不开源了。
 
 **********
+### 2022-2-11
+#### xia SQL 1.2
+* 更新支持json格式
+
+![image](https://user-images.githubusercontent.com/30351807/153567877-479a0e15-9d6c-43f5-84d9-80c5dfb6fd03.png)
+
+
+**********
 ### 2022-2-10
 #### xia SQL 1.1
 * 更新了序列号
