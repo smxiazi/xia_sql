@@ -1,7 +1,7 @@
 package burp;
 
-import jdk.internal.org.objectweb.asm.tree.analysis.Value;
 
+import java.security.MessageDigest;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -25,26 +25,29 @@ import java.awt.*;
 import java.awt.event.ItemListener;
 
 
-public class BurpExtender extends AbstractTableModel implements IBurpExtender, ITab, IHttpListener, IMessageEditorController
+public class BurpExtender extends AbstractTableModel implements IBurpExtender, ITab, IHttpListener,IScannerCheck, IMessageEditorController
 {
     private IBurpExtenderCallbacks callbacks;
     private IExtensionHelpers helpers;
     private JSplitPane splitPane;
     private IMessageEditor requestViewer;
     private IMessageEditor responseViewer;
-    private final List<LogEntry> log = new ArrayList<LogEntry>();
-    private final List<LogEntry> log2 = new ArrayList<LogEntry>();
+    private final List<LogEntry> log = new ArrayList<LogEntry>();//记录原始流量
+    private final List<LogEntry> log2 = new ArrayList<LogEntry>();//记录攻击流量
     private final List<LogEntry> log3 = new ArrayList<LogEntry>();//用于展现
+    private final List<Request_md5> log4_md5 = new ArrayList<Request_md5>();//用于存放数据包的md5
     private IHttpRequestResponse currentlyDisplayedItem;
     public PrintWriter stdout;
     int switchs = 1; //开关 0关 1开
-    int clicks_Repeater=64;//64是监听 0是关闭
+    int clicks_Repeater=0;//64是监听 0是关闭
     int clicks_Proxy=0;//4是监听 0是关闭
     int conut = 0; //记录条数
     int log_id = 0; //用于判断目前选中的数据包
     public AbstractTableModel model = new MyModel();
     int original_data_len;//记录原始数据包的长度
-    int is_int = 0; //开关 0关 1开;//记录原始数据包的长度
+    int is_int = 1; //开关 0关 1开;//纯数据是否进行-1，-0
+    String temp_data; //用于保存临时内容
+    int is_add; //用于判断是否要添加扫描
 
 
 
@@ -59,7 +62,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         this.stdout = new PrintWriter(callbacks.getStdout(), true);
         this.stdout.println("hello xia sql!");
         this.stdout.println("你好 欢迎使用 瞎注!");
-        this.stdout.println("version:1.4");
+        this.stdout.println("version:1.5");
 
 
 
@@ -91,10 +94,6 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 JPanel jp=new JPanel();
                 JLabel jl=new JLabel("==>");    //创建一个标签
 
-                //Object[][] tableDate=new Object[5][3];
-                //String[] name={"参数","payload","响应包长度"};
-                //JTable table=new JTable(tableDate,name);
-                //AbstractTableModel model = new MyModel();
                 Table_log2 table=new Table_log2(model);
                 JScrollPane pane=new JScrollPane(table);//给列表添加滚动条
 
@@ -107,9 +106,9 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 jps.setLayout(new GridLayout(6, 1)); //六行一列
                 JLabel jls=new JLabel("<html>插件名：瞎注 blog:www.nmd5.com<br>后台发送完成请求后才显示响应包。<br>感谢名单：Moonlit、阿猫阿狗、Shincehor</html>");    //创建一个标签
                 JCheckBox chkbox1=new JCheckBox("启动插件", true);    //创建指定文本和状态的复选框
-                JCheckBox chkbox2=new JCheckBox("监控Repeater",true);    //创建指定文本的复选框
+                JCheckBox chkbox2=new JCheckBox("监控Repeater");    //创建指定文本的复选框
                 JCheckBox chkbox3=new JCheckBox("监控Proxy");    //创建指定文本的复选框
-                JCheckBox chkbox4=new JCheckBox("值是数字则进行-1、-0");    //创建指定文本的复选框
+                JCheckBox chkbox4=new JCheckBox("值是数字则进行-1、-0",true);    //创建指定文本的复选框
                 //chkbox4.setEnabled(false);//设置为不可以选择
 
                 JButton btn1=new JButton("清空列表");    //创建JButton对象
@@ -170,6 +169,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                         log.clear();//清除log的内容
                         log2.clear();//清除log2的内容
                         log3.clear();//清除log3的内容
+                        log4_md5.clear();//清除log4的内容
                         fireTableRowsInserted(log.size(), log.size());//刷新列表中的展示
                         model.fireTableRowsInserted(log3.size(), log3.size());//刷新列表中的展示
                     }
@@ -208,6 +208,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
                 // register ourselves as an HTTP listener
                 callbacks.registerHttpListener(BurpExtender.this);
+                callbacks.registerScannerCheck(BurpExtender.this);
 
             }
         });
@@ -241,24 +242,47 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
     {
 
         if(switchs == 1){//插件开关
-            if(toolFlag == clicks_Repeater || toolFlag == clicks_Proxy){//监听Repeater和Proxy
+            if(toolFlag == clicks_Repeater){//监听Repeater
                 // only process responses
                 if (!messageIsRequest)
                 {
                     // create a new log entry with the message details
                     synchronized(log)
                     {
-                        //用于判断是否要处理这个请求
+                        //把当前url和参数进行md5加密，用于判断该url是否已经扫描过
                         List<IParameter>paraLists= helpers.analyzeRequest(messageInfo).getParameters();
+                        temp_data = String.valueOf(helpers.analyzeRequest(messageInfo).getUrl());//url
+                        is_add = 0;
                         for (IParameter para : paraLists){// 循环获取参数，判断类型，再构造新的参数，合并到新的请求包中。
                             if (para.getType() == 0 || para.getType() == 1 || para.getType() == 6) { //getTpe()就是来判断参数是在那个位置的
-                                conut += 1;
-                                int row = log.size();
-                                original_data_len = callbacks.saveBuffersToTempFiles(messageInfo).getResponse().length;//更新原始数据包的长度
-                                log.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(messageInfo),helpers.analyzeRequest(messageInfo).getUrl(),"","",""));
-                                fireTableRowsInserted(row, row);
-                                break;
+                                is_add = 1;
+                                temp_data += "+"+para.getName();
                             }
+                        }
+
+                        //url+参数进行编码
+                        temp_data += "+"+helpers.analyzeRequest(messageInfo).getMethod();
+                        //this.stdout.println(temp_data);
+                        temp_data = MD5(temp_data);
+                        this.stdout.println(temp_data);
+
+
+                        for (Request_md5 i : log4_md5){
+                            if(i.md5_data.equals(temp_data)){
+                                //如果md5一样证明该数据已扫描过
+                                return;
+                            }
+                        }
+
+                        //用于判断是否要处理这个请求
+                        if (is_add == 1){
+                            log4_md5.add(new Request_md5(temp_data));//保存对应对md5
+
+                            conut += 1;
+                            int row = log.size();
+                            original_data_len = callbacks.saveBuffersToTempFiles(messageInfo).getResponse().length;//更新原始数据包的长度
+                            log.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(messageInfo),helpers.analyzeRequest(messageInfo).getUrl(),"","",""));
+                            fireTableRowsInserted(row, row);
                         }
 
                         //处理参数
@@ -277,7 +301,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                                 stdout.println(key+":"+value);//输出原始的键值数据
 
                                 if(is_int == 1){//开关，用于判断是否要开启-1、-0的操作
-                                    if (value.matches("[0-9]+")) {//用于判读参数的值是否为存数字
+                                    if (value.matches("[0-9]+")) {//用于判读参数的值是否为纯数字
                                         payloads.add("-1");
                                         payloads.add("-0");
                                     }
@@ -297,7 +321,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
                                         String newBody = "{"; //json body的内容
 
-                                        for (IParameter paras : paraList){//循环所以参数，用来自定义json格式body做准备
+                                        for (IParameter paras : paraList){//循环所有参数，用来自定义json格式body做准备
                                             if(paras.getType() == 6) {//只要json格式的数据
                                                 if(key == paras.getName() && value == paras.getValue()){//判断现在的键和值是否是需要添加payload的键和值
                                                     newBody += "\""+paras.getName() + "\":" + "\""+paras.getValue()+payload+"\",";//构造json的body
@@ -306,6 +330,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                                                 }
                                             }
                                         }
+
                                         newBody = newBody.substring(0,newBody.length()-1); //去除最后一个,
                                         newBody += "}";//json body的内容
 
@@ -318,10 +343,6 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                                         byte[] newRequest = helpers.updateParameter(new_Request,newPara);//更新请求包的参数
                                         requestResponse = callbacks.makeHttpRequest(iHttpService,newRequest);//发送请求
                                     }
-
-                                    //新的返回包
-                                    //IResponseInfo analyzeResponse1 = this.helpers.analyzeResponse(requestResponse.getResponse());
-                                    //List<String> response1_header_list = analyzeResponse1.getHeaders();
 
                                     //判断数据长度是否会变化
                                     String change_sign;//第二个表格中年 变化 的内容
@@ -358,6 +379,149 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
     }
 
+
+    @Override
+    public List<IScanIssue> doPassiveScan(IHttpRequestResponse baseRequestResponse) {
+        if(clicks_Proxy == 4 && switchs == 1) {
+
+
+            //把当前url和参数进行md5加密，用于判断该url是否已经扫描过
+            List<IParameter>paraLists= helpers.analyzeRequest(baseRequestResponse).getParameters();
+            temp_data = String.valueOf(helpers.analyzeRequest(baseRequestResponse).getUrl());//url
+            is_add = 0;
+            for (IParameter para : paraLists){// 循环获取参数，判断类型，再构造新的参数，合并到新的请求包中。
+                if (para.getType() == 0 || para.getType() == 1 || para.getType() == 6) { //getTpe()就是来判断参数是在那个位置的
+                    is_add = 1;
+                    temp_data += "+"+para.getName();
+                }
+            }
+
+            //url+参数进行编码
+            temp_data += "+"+helpers.analyzeRequest(baseRequestResponse).getMethod();
+            //this.stdout.println(temp_data);
+            temp_data = MD5(temp_data);
+            this.stdout.println(temp_data);
+
+
+            for (Request_md5 i : log4_md5){
+                if(i.md5_data.equals(temp_data)){
+                    //如果md5一样证明该数据已扫描过
+                    return null;
+                }
+            }
+
+            //用于判断是否要处理这个请求
+            if (is_add == 1){
+                log4_md5.add(new Request_md5(temp_data));//保存对应对md5
+
+                conut += 1;
+                int row = log.size();
+                original_data_len = callbacks.saveBuffersToTempFiles(baseRequestResponse).getResponse().length;//更新原始数据包的长度
+                log.add(new LogEntry(conut,4, callbacks.saveBuffersToTempFiles(baseRequestResponse),helpers.analyzeRequest(baseRequestResponse).getUrl(),"","",""));
+                fireTableRowsInserted(row, row);
+            }
+
+
+            //处理参数
+            List<IParameter>paraList= helpers.analyzeRequest(baseRequestResponse).getParameters();
+            byte[] new_Request = baseRequestResponse.getRequest();
+
+            for (IParameter para : paraList){// 循环获取参数
+                //payload
+                ArrayList<String> payloads = new ArrayList<>();
+                payloads.add("'");
+                payloads.add("''");
+
+                if (para.getType() == 0 || para.getType() == 1 || para.getType() == 6){ //getTpe()就是来判断参数是在那个位置的
+                    String key = para.getName();//获取参数的名称
+                    String value = para.getValue();//获取参数的值
+                    stdout.println(key+":"+value);//输出原始的键值数据
+
+                    if(is_int == 1){//开关，用于判断是否要开启-1、-0的操作
+                        if (value.matches("[0-9]+")) {//用于判读参数的值是否为纯数字
+                            payloads.add("-1");
+                            payloads.add("-0");
+                        }
+                    }
+
+
+                    int change = 0; //用于判断返回包长度是否一致、保存第一次请求响应的长度
+                    for (String payload : payloads) {
+                        stdout.println(key+":"+value+payload);//输出添加payload的键和值
+                        IHttpService iHttpService = baseRequestResponse.getHttpService();
+
+                        //新的请求包
+                        IHttpRequestResponse requestResponse; //用于过if内的变量
+                        if(para.getType() == 6){
+                            //json格式
+                            List<String> headers = helpers.analyzeRequest(baseRequestResponse).getHeaders();
+
+                            String newBody = "{"; //json body的内容
+
+                            for (IParameter paras : paraList){//循环所有参数，用来自定义json格式body做准备
+                                if(paras.getType() == 6) {//只要json格式的数据
+                                    if(key == paras.getName() && value == paras.getValue()){//判断现在的键和值是否是需要添加payload的键和值
+                                        newBody += "\""+paras.getName() + "\":" + "\""+paras.getValue()+payload+"\",";//构造json的body
+                                    }else {
+                                        newBody += "\""+paras.getName() + "\":" + "\""+paras.getValue()+"\",";//构造json的body
+                                    }
+                                }
+                            }
+
+                            newBody = newBody.substring(0,newBody.length()-1); //去除最后一个,
+                            newBody += "}";//json body的内容
+
+                            byte[] bodyByte = newBody.getBytes();
+                            byte[] new_Requests = helpers.buildHttpMessage(headers, bodyByte); //关键方法
+                            requestResponse = callbacks.makeHttpRequest(iHttpService,new_Requests);//发送请求
+                        }else {
+                            //不是json格式
+                            IParameter newPara = helpers.buildParameter(key, value+payload, para.getType()); //构造新的参数
+                            byte[] newRequest = helpers.updateParameter(new_Request,newPara);//更新请求包的参数
+                            requestResponse = callbacks.makeHttpRequest(iHttpService,newRequest);//发送请求
+                        }
+
+                        //判断数据长度是否会变化
+                        String change_sign;//第二个表格中年 变化 的内容
+                        if(payload == "'" || payload == "-1" || change == 0){
+                            change = requestResponse.getResponse().length;//保存第一次请求响应的长度
+                            change_sign = "";
+                        }else{
+                            if(change != requestResponse.getResponse().length){//判断第一次的长度和现在的是否不同
+                                if(payload == "''" && requestResponse.getResponse().length == original_data_len || payload == "-0" && requestResponse.getResponse().length == original_data_len){//判断两个单引号的长度和第一次的不一样且和原始包的长度一致
+                                    //原始包的长度和两个双引号的长度相同且和一个单引号的长度不同
+                                    change_sign = "✔ ==> ?";
+                                }else{
+                                    //第一次的包和第二次包的长度不同
+                                    change_sign = "✔";
+                                }
+                            }else {
+                                //第一次包和第二次包的长度一样
+                                change_sign = "";
+                            }
+                        }
+                        //把响应内容保存在log2中
+                        log2.add(new LogEntry(conut,4, callbacks.saveBuffersToTempFiles(requestResponse),helpers.analyzeRequest(requestResponse).getUrl(),key,value+payload,change_sign));
+
+                    }
+
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public List<IScanIssue> doActiveScan(IHttpRequestResponse baseRequestResponse, IScannerInsertionPoint insertionPoint) {
+        return null;
+    }
+
+    @Override
+    public int consolidateDuplicateIssues(IScanIssue existingIssue, IScanIssue newIssue) {
+        if (existingIssue.getIssueName().equals(newIssue.getIssueName()))
+            return -1;
+        else return 0;
+    }
     //
     // extend AbstractTableModel
     //
@@ -560,10 +724,19 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         }
     }
 
+    //存放数据包的md5值，用于匹配该数据包已请求过
+    private static class Request_md5
+    {
+        final String md5_data;
+
+        Request_md5(String md5_data)
+        {
+            this.md5_data = md5_data;
+        }
+    }
     //
     // class to hold details of each log entry
     //
-
     private static class LogEntry
     {
         final int id;
@@ -584,6 +757,33 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
             this.parameter = parameter;
             this.value = value;
             this.change = change;
+        }
+    }
+
+    public static String MD5(String key) {
+        char hexDigits[] = {
+                '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+        };
+        try {
+            byte[] btInput = key.getBytes();
+            // 获得MD5摘要算法的 MessageDigest 对象
+            MessageDigest mdInst = MessageDigest.getInstance("MD5");
+            // 使用指定的字节更新摘要
+            mdInst.update(btInput);
+            // 获得密文
+            byte[] md = mdInst.digest();
+            // 把密文转换成十六进制的字符串形式
+            int j = md.length;
+            char str[] = new char[j * 2];
+            int k = 0;
+            for (int i = 0; i < j; i++) {
+                byte byte0 = md[i];
+                str[k++] = hexDigits[byte0 >>> 4 & 0xf];
+                str[k++] = hexDigits[byte0 & 0xf];
+            }
+            return new String(str);
+        } catch (Exception e) {
+            return null;
         }
     }
 
