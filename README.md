@@ -22,6 +22,8 @@
 ### 2022-3-31
 #### xia SQL 1.6
 * 更新相同数据包只扫描一次的算法，算法：MD5(不带参数的url+参数名+POST/GET)
+![image](https://user-images.githubusercontent.com/30351807/161045937-d0e3584a-d610-4b26-ba33-6cc08dd9e8fa.png)
+
 
 **********
 ### 2022-3-29
