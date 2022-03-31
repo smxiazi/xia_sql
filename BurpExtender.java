@@ -62,7 +62,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         this.stdout = new PrintWriter(callbacks.getStdout(), true);
         this.stdout.println("hello xia sql!");
         this.stdout.println("你好 欢迎使用 瞎注!");
-        this.stdout.println("version:1.5");
+        this.stdout.println("version:1.6");
 
 
 
@@ -73,7 +73,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         helpers = callbacks.getHelpers();
 
         // set our extension name
-        callbacks.setExtensionName("xia SQL");
+        callbacks.setExtensionName("xia SQL V1.6");
 
         // create our UI
         SwingUtilities.invokeLater(new Runnable()
@@ -104,7 +104,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 //侧边复选框
                 JPanel jps=new JPanel();
                 jps.setLayout(new GridLayout(6, 1)); //六行一列
-                JLabel jls=new JLabel("<html>插件名：瞎注 blog:www.nmd5.com<br>后台发送完成请求后才显示响应包。<br>感谢名单：Moonlit、阿猫阿狗、Shincehor</html>");    //创建一个标签
+                JLabel jls=new JLabel("<html>插件名：瞎注 blog:www.nmd5.com<br>版本：xia SQL V1.6<br>感谢名单：Moonlit、阿猫阿狗、Shincehor</html>");    //创建一个标签
                 JCheckBox chkbox1=new JCheckBox("启动插件", true);    //创建指定文本和状态的复选框
                 JCheckBox chkbox2=new JCheckBox("监控Repeater");    //创建指定文本的复选框
                 JCheckBox chkbox3=new JCheckBox("监控Proxy");    //创建指定文本的复选框
@@ -252,6 +252,11 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                         //把当前url和参数进行md5加密，用于判断该url是否已经扫描过
                         List<IParameter>paraLists= helpers.analyzeRequest(messageInfo).getParameters();
                         temp_data = String.valueOf(helpers.analyzeRequest(messageInfo).getUrl());//url
+                        //stdout.println(temp_data);
+                        String[] temp_data_strarray=temp_data.split("\\?");
+                        String temp_data =(String) temp_data_strarray[0];//获取问号前面的字符串
+                        //stdout.println(temp_data);
+
                         is_add = 0;
                         for (IParameter para : paraLists){// 循环获取参数，判断类型，再构造新的参数，合并到新的请求包中。
                             if (para.getType() == 0 || para.getType() == 1 || para.getType() == 6) { //getTpe()就是来判断参数是在那个位置的
@@ -263,8 +268,10 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                         //url+参数进行编码
                         temp_data += "+"+helpers.analyzeRequest(messageInfo).getMethod();
                         //this.stdout.println(temp_data);
+                        this.stdout.println("\nMD5(\""+temp_data+"\")");
                         temp_data = MD5(temp_data);
                         this.stdout.println(temp_data);
+
 
 
                         for (Request_md5 i : log4_md5){
@@ -388,6 +395,9 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
             //把当前url和参数进行md5加密，用于判断该url是否已经扫描过
             List<IParameter>paraLists= helpers.analyzeRequest(baseRequestResponse).getParameters();
             temp_data = String.valueOf(helpers.analyzeRequest(baseRequestResponse).getUrl());//url
+            String[] temp_data_strarray=temp_data.split("\\?");
+            String temp_data =(String) temp_data_strarray[0];//获取问号前面的字符串
+
             is_add = 0;
             for (IParameter para : paraLists){// 循环获取参数，判断类型，再构造新的参数，合并到新的请求包中。
                 if (para.getType() == 0 || para.getType() == 1 || para.getType() == 6) { //getTpe()就是来判断参数是在那个位置的
@@ -399,6 +409,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
             //url+参数进行编码
             temp_data += "+"+helpers.analyzeRequest(baseRequestResponse).getMethod();
             //this.stdout.println(temp_data);
+            this.stdout.println("\nMD5(\""+temp_data+"\")");
             temp_data = MD5(temp_data);
             this.stdout.println(temp_data);
 
