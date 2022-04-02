@@ -42,7 +42,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
     int clicks_Repeater=0;//64是监听 0是关闭
     int clicks_Proxy=0;//4是监听 0是关闭
     int conut = 0; //记录条数
-    int log_id = 0; //用于判断目前选中的数据包
+    String data_md5_id; //用于判断目前选中的数据包
     public AbstractTableModel model = new MyModel();
     int original_data_len;//记录原始数据包的长度
     int is_int = 1; //开关 0关 1开;//纯数据是否进行-1，-0
@@ -62,7 +62,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         this.stdout = new PrintWriter(callbacks.getStdout(), true);
         this.stdout.println("hello xia sql!");
         this.stdout.println("你好 欢迎使用 瞎注!");
-        this.stdout.println("version:1.6");
+        this.stdout.println("version:1.7");
 
 
 
@@ -73,7 +73,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         helpers = callbacks.getHelpers();
 
         // set our extension name
-        callbacks.setExtensionName("xia SQL V1.6");
+        callbacks.setExtensionName("xia SQL V1.7");
 
         // create our UI
         SwingUtilities.invokeLater(new Runnable()
@@ -104,7 +104,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 //侧边复选框
                 JPanel jps=new JPanel();
                 jps.setLayout(new GridLayout(6, 1)); //六行一列
-                JLabel jls=new JLabel("<html>插件名：瞎注 blog:www.nmd5.com<br>版本：xia SQL V1.6<br>感谢名单：Moonlit、阿猫阿狗、Shincehor</html>");    //创建一个标签
+                JLabel jls=new JLabel("<html>插件名：瞎注 blog:www.nmd5.com<br>版本：xia SQL V1.7<br>感谢名单：Moonlit、阿猫阿狗、Shincehor</html>");    //创建一个标签
                 JCheckBox chkbox1=new JCheckBox("启动插件", true);    //创建指定文本和状态的复选框
                 JCheckBox chkbox2=new JCheckBox("监控Repeater");    //创建指定文本的复选框
                 JCheckBox chkbox3=new JCheckBox("监控Proxy");    //创建指定文本的复选框
@@ -170,6 +170,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                         log2.clear();//清除log2的内容
                         log3.clear();//清除log3的内容
                         log4_md5.clear();//清除log4的内容
+                        conut = 0;
                         fireTableRowsInserted(log.size(), log.size());//刷新列表中的展示
                         model.fireTableRowsInserted(log3.size(), log3.size());//刷新列表中的展示
                     }
@@ -288,7 +289,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                             conut += 1;
                             int row = log.size();
                             original_data_len = callbacks.saveBuffersToTempFiles(messageInfo).getResponse().length;//更新原始数据包的长度
-                            log.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(messageInfo),helpers.analyzeRequest(messageInfo).getUrl(),"","",""));
+                            log.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(messageInfo),helpers.analyzeRequest(messageInfo).getUrl(),"","","",temp_data));
                             fireTableRowsInserted(row, row);
                         }
 
@@ -371,7 +372,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                                         }
                                     }
                                     //把响应内容保存在log2中
-                                    log2.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(requestResponse),helpers.analyzeRequest(requestResponse).getUrl(),key,value+payload,change_sign));
+                                    log2.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(requestResponse),helpers.analyzeRequest(requestResponse).getUrl(),key,value+payload,change_sign,temp_data));
 
                                 }
 
@@ -428,7 +429,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 conut += 1;
                 int row = log.size();
                 original_data_len = callbacks.saveBuffersToTempFiles(baseRequestResponse).getResponse().length;//更新原始数据包的长度
-                log.add(new LogEntry(conut,4, callbacks.saveBuffersToTempFiles(baseRequestResponse),helpers.analyzeRequest(baseRequestResponse).getUrl(),"","",""));
+                log.add(new LogEntry(conut,4, callbacks.saveBuffersToTempFiles(baseRequestResponse),helpers.analyzeRequest(baseRequestResponse).getUrl(),"","","",temp_data));
                 fireTableRowsInserted(row, row);
             }
 
@@ -512,7 +513,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                             }
                         }
                         //把响应内容保存在log2中
-                        log2.add(new LogEntry(conut,4, callbacks.saveBuffersToTempFiles(requestResponse),helpers.analyzeRequest(requestResponse).getUrl(),key,value+payload,change_sign));
+                        log2.add(new LogEntry(conut,4, callbacks.saveBuffersToTempFiles(requestResponse),helpers.analyzeRequest(requestResponse).getUrl(),key,value+payload,change_sign,temp_data));
 
                     }
 
@@ -694,11 +695,11 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         {
             // show the log entry for the selected row
             LogEntry logEntry = log.get(row);
-            log_id = logEntry.id;
+            data_md5_id = logEntry.data_md5;
             //stdout.println(log_id);//输出目前选中的行数
             log3.clear();
             for (int i = 0; i < log2.size(); i++) {//筛选出目前选中的原始数据包--》衍生出的带有payload的数据包
-                 if(log2.get(i).id==log_id){
+                 if(log2.get(i).data_md5==data_md5_id){
                      log3.add(log2.get(i));
                  }
             }
@@ -757,9 +758,10 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         final String parameter;
         final String value;
         final String change;
+        final String data_md5;
 
 
-        LogEntry(int id,int tool, IHttpRequestResponsePersisted requestResponse, URL url,String parameter,String value,String change)
+        LogEntry(int id,int tool, IHttpRequestResponsePersisted requestResponse, URL url,String parameter,String value,String change,String data_md5)
         {
             this.id = id;
             this.tool = tool;
@@ -768,6 +770,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
             this.parameter = parameter;
             this.value = value;
             this.change = change;
+            this.data_md5 = data_md5;
         }
     }
 
