@@ -17,6 +17,12 @@
 * 监控Repeater 为主动扫描模式，`优先发送payload`，待发送完payload后再返回响应包。
 * 同个数据包只扫描一次，算法：`MD5(不带参数的url+参数名+POST/GET)`。
 
+**********
+### 2022-4-2
+#### xia SQL 1.7
+* 修改在burp2.x版本下poxry模式展示内容bug
+![image](https://user-images.githubusercontent.com/30351807/161375553-cee2df69-5681-4818-95ae-0ed389795ea4.png)
+
 
 **********
 ### 2022-3-31
