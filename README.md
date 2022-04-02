@@ -20,7 +20,7 @@
 **********
 ### 2022-4-2
 #### xia SQL 1.7
-* 修改在burp2.x版本下poxry模式展示内容bug
+* 修复在burp2.x版本下poxry模式展示内容bug
 ![image](https://user-images.githubusercontent.com/30351807/161375553-cee2df69-5681-4818-95ae-0ed389795ea4.png)
 
 
