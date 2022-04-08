@@ -23,9 +23,10 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import java.awt.*;
 import java.awt.event.ItemListener;
+import javax.swing.JMenuItem;
 
 
-public class BurpExtender extends AbstractTableModel implements IBurpExtender, ITab, IHttpListener,IScannerCheck, IMessageEditorController
+public class BurpExtender extends AbstractTableModel implements IBurpExtender, ITab, IHttpListener,IScannerCheck, IMessageEditorController,IContextMenuFactory
 {
     private IBurpExtenderCallbacks callbacks;
     private IExtensionHelpers helpers;
@@ -62,7 +63,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         this.stdout = new PrintWriter(callbacks.getStdout(), true);
         this.stdout.println("hello xia sql!");
         this.stdout.println("你好 欢迎使用 瞎注!");
-        this.stdout.println("version:1.7");
+        this.stdout.println("version:1.8");
 
 
 
@@ -73,7 +74,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         helpers = callbacks.getHelpers();
 
         // set our extension name
-        callbacks.setExtensionName("xia SQL V1.7");
+        callbacks.setExtensionName("xia SQL V1.8");
 
         // create our UI
         SwingUtilities.invokeLater(new Runnable()
@@ -104,7 +105,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 //侧边复选框
                 JPanel jps=new JPanel();
                 jps.setLayout(new GridLayout(6, 1)); //六行一列
-                JLabel jls=new JLabel("<html>插件名：瞎注 blog:www.nmd5.com<br>版本：xia SQL V1.7<br>感谢名单：Moonlit、阿猫阿狗、Shincehor</html>");    //创建一个标签
+                JLabel jls=new JLabel("<html>插件名：瞎注 blog:www.nmd5.com<br>版本：xia SQL V1.8<br>感谢名单：Moonlit、阿猫阿狗、Shincehor</html>");    //创建一个标签
                 JCheckBox chkbox1=new JCheckBox("启动插件", true);    //创建指定文本和状态的复选框
                 JCheckBox chkbox2=new JCheckBox("监控Repeater");    //创建指定文本的复选框
                 JCheckBox chkbox3=new JCheckBox("监控Proxy");    //创建指定文本的复选框
@@ -210,6 +211,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 // register ourselves as an HTTP listener
                 callbacks.registerHttpListener(BurpExtender.this);
                 callbacks.registerScannerCheck(BurpExtender.this);
+                callbacks.registerContextMenuFactory(BurpExtender.this);
 
             }
         });
@@ -250,135 +252,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                     // create a new log entry with the message details
                     synchronized(log)
                     {
-                        //把当前url和参数进行md5加密，用于判断该url是否已经扫描过
-                        List<IParameter>paraLists= helpers.analyzeRequest(messageInfo).getParameters();
-                        temp_data = String.valueOf(helpers.analyzeRequest(messageInfo).getUrl());//url
-                        //stdout.println(temp_data);
-                        String[] temp_data_strarray=temp_data.split("\\?");
-                        String temp_data =(String) temp_data_strarray[0];//获取问号前面的字符串
-                        //stdout.println(temp_data);
-
-                        is_add = 0;
-                        for (IParameter para : paraLists){// 循环获取参数，判断类型，再构造新的参数，合并到新的请求包中。
-                            if (para.getType() == 0 || para.getType() == 1 || para.getType() == 6) { //getTpe()就是来判断参数是在那个位置的
-                                is_add = 1;
-                                temp_data += "+"+para.getName();
-                            }
-                        }
-
-                        //url+参数进行编码
-                        temp_data += "+"+helpers.analyzeRequest(messageInfo).getMethod();
-                        //this.stdout.println(temp_data);
-                        this.stdout.println("\nMD5(\""+temp_data+"\")");
-                        temp_data = MD5(temp_data);
-                        this.stdout.println(temp_data);
-
-
-
-                        for (Request_md5 i : log4_md5){
-                            if(i.md5_data.equals(temp_data)){
-                                //如果md5一样证明该数据已扫描过
-                                return;
-                            }
-                        }
-
-                        //用于判断是否要处理这个请求
-                        if (is_add == 1){
-                            log4_md5.add(new Request_md5(temp_data));//保存对应对md5
-
-                            conut += 1;
-                            int row = log.size();
-                            original_data_len = callbacks.saveBuffersToTempFiles(messageInfo).getResponse().length;//更新原始数据包的长度
-                            log.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(messageInfo),helpers.analyzeRequest(messageInfo).getUrl(),"","","",temp_data));
-                            fireTableRowsInserted(row, row);
-                        }
-
-                        //处理参数
-                        List<IParameter>paraList= helpers.analyzeRequest(messageInfo).getParameters();
-                        byte[] new_Request = messageInfo.getRequest();
-
-                        for (IParameter para : paraList){// 循环获取参数
-                            //payload
-                            ArrayList<String> payloads = new ArrayList<>();
-                            payloads.add("'");
-                            payloads.add("''");
-
-                            if (para.getType() == 0 || para.getType() == 1 || para.getType() == 6){ //getTpe()就是来判断参数是在那个位置的
-                                String key = para.getName();//获取参数的名称
-                                String value = para.getValue();//获取参数的值
-                                stdout.println(key+":"+value);//输出原始的键值数据
-
-                                if(is_int == 1){//开关，用于判断是否要开启-1、-0的操作
-                                    if (value.matches("[0-9]+")) {//用于判读参数的值是否为纯数字
-                                        payloads.add("-1");
-                                        payloads.add("-0");
-                                    }
-                                }
-
-
-                                int change = 0; //用于判断返回包长度是否一致、保存第一次请求响应的长度
-                                for (String payload : payloads) {
-                                    stdout.println(key+":"+value+payload);//输出添加payload的键和值
-                                    IHttpService iHttpService = messageInfo.getHttpService();
-
-                                    //新的请求包
-                                    IHttpRequestResponse requestResponse; //用于过if内的变量
-                                    if(para.getType() == 6){
-                                        //json格式
-                                        List<String> headers = helpers.analyzeRequest(messageInfo).getHeaders();
-
-                                        String newBody = "{"; //json body的内容
-
-                                        for (IParameter paras : paraList){//循环所有参数，用来自定义json格式body做准备
-                                            if(paras.getType() == 6) {//只要json格式的数据
-                                                if(key == paras.getName() && value == paras.getValue()){//判断现在的键和值是否是需要添加payload的键和值
-                                                    newBody += "\""+paras.getName() + "\":" + "\""+paras.getValue()+payload+"\",";//构造json的body
-                                                }else {
-                                                    newBody += "\""+paras.getName() + "\":" + "\""+paras.getValue()+"\",";//构造json的body
-                                                }
-                                            }
-                                        }
-
-                                        newBody = newBody.substring(0,newBody.length()-1); //去除最后一个,
-                                        newBody += "}";//json body的内容
-
-                                        byte[] bodyByte = newBody.getBytes();
-                                        byte[] new_Requests = helpers.buildHttpMessage(headers, bodyByte); //关键方法
-                                        requestResponse = callbacks.makeHttpRequest(iHttpService,new_Requests);//发送请求
-                                    }else {
-                                        //不是json格式
-                                        IParameter newPara = helpers.buildParameter(key, value+payload, para.getType()); //构造新的参数
-                                        byte[] newRequest = helpers.updateParameter(new_Request,newPara);//更新请求包的参数
-                                        requestResponse = callbacks.makeHttpRequest(iHttpService,newRequest);//发送请求
-                                    }
-
-                                    //判断数据长度是否会变化
-                                    String change_sign;//第二个表格中年 变化 的内容
-                                    if(payload == "'" || payload == "-1" || change == 0){
-                                        change = requestResponse.getResponse().length;//保存第一次请求响应的长度
-                                        change_sign = "";
-                                    }else{
-                                        if(change != requestResponse.getResponse().length){//判断第一次的长度和现在的是否不同
-                                            if(payload == "''" && requestResponse.getResponse().length == original_data_len || payload == "-0" && requestResponse.getResponse().length == original_data_len){//判断两个单引号的长度和第一次的不一样且和原始包的长度一致
-                                                //原始包的长度和两个双引号的长度相同且和一个单引号的长度不同
-                                                change_sign = "✔ ==> ?";
-                                            }else{
-                                                //第一次的包和第二次包的长度不同
-                                                change_sign = "✔";
-                                            }
-                                        }else {
-                                            //第一次包和第二次包的长度一样
-                                            change_sign = "";
-                                        }
-                                    }
-                                    //把响应内容保存在log2中
-                                    log2.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(requestResponse),helpers.analyzeRequest(requestResponse).getUrl(),key,value+payload,change_sign,temp_data));
-
-                                }
-
-                            }
-                        }
-
+                        BurpExtender.this.checkVul(messageInfo,toolFlag);
                     }
                 }
             }
@@ -387,17 +261,63 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
     }
 
-
     @Override
     public List<IScanIssue> doPassiveScan(IHttpRequestResponse baseRequestResponse) {
-        if(clicks_Proxy == 4 && switchs == 1) {
+        if(clicks_Proxy == 4 && switchs == 1)
+        {
+            BurpExtender.this.checkVul(baseRequestResponse,4);
+        }
+        return null;
+    }
+
+    @Override
+    public List<JMenuItem> createMenuItems(final IContextMenuInvocation invocation) {
+
+        List<JMenuItem> listMenuItems = new ArrayList<JMenuItem>(1);
+        if(invocation.getToolFlag() == IBurpExtenderCallbacks.TOOL_REPEATER || invocation.getToolFlag() == IBurpExtenderCallbacks.TOOL_PROXY){
+            //父级菜单
+            IHttpRequestResponse[] responses = invocation.getSelectedMessages();
+            JMenuItem jMenu = new JMenuItem("send xia SQL");
+
+            jMenu.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if(switchs == 1) {
+                        //不应在Swing事件调度线程中发出HTTP请求，所以需要创建一个Runnable并在 run() 方法中完成工作，后调用 new Thread(runnable).start() 来启动线程
+                        Thread thread = new Thread(new Runnable() {
+                            public void run() {
+                                try {
+                                    BurpExtender.this.checkVul(responses[0], 1024);
+                                } catch (Exception ex) {
+                                    ex.printStackTrace();
+                                    BurpExtender.this.stdout.println(ex);
+                                }
+                            }
+                        });
+                        thread.start();
+                    }else {
+                        BurpExtender.this.stdout.println("插件xia SQL关闭状态！");
+                    }
+
+                }
+            });
+
+            listMenuItems.add(jMenu);
 
 
+                                       }
+            //BurpExtender.this.checkVul(responses,4);
+        return listMenuItems;
+    }
+
+    private void checkVul(IHttpRequestResponse baseRequestResponse, int toolFlag){
             //把当前url和参数进行md5加密，用于判断该url是否已经扫描过
             List<IParameter>paraLists= helpers.analyzeRequest(baseRequestResponse).getParameters();
             temp_data = String.valueOf(helpers.analyzeRequest(baseRequestResponse).getUrl());//url
+            //stdout.println(temp_data);
             String[] temp_data_strarray=temp_data.split("\\?");
             String temp_data =(String) temp_data_strarray[0];//获取问号前面的字符串
+            //stdout.println(temp_data);
 
             is_add = 0;
             for (IParameter para : paraLists){// 循环获取参数，判断类型，再构造新的参数，合并到新的请求包中。
@@ -415,10 +335,19 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
             this.stdout.println(temp_data);
 
 
+
             for (Request_md5 i : log4_md5){
-                if(i.md5_data.equals(temp_data)){
-                    //如果md5一样证明该数据已扫描过
-                    return null;
+                if(i.md5_data.equals(temp_data)){//判断md5值是否一样，且右键发送过来的请求不进行md5验证
+                    if(toolFlag == 1024){
+                        temp_data = String.valueOf(System.currentTimeMillis());
+                        this.stdout.println(temp_data);
+                        temp_data = MD5(temp_data);
+                        this.stdout.println(temp_data);
+                    }else {
+                        return;
+                    }
+
+
                 }
             }
 
@@ -429,10 +358,9 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 conut += 1;
                 int row = log.size();
                 original_data_len = callbacks.saveBuffersToTempFiles(baseRequestResponse).getResponse().length;//更新原始数据包的长度
-                log.add(new LogEntry(conut,4, callbacks.saveBuffersToTempFiles(baseRequestResponse),helpers.analyzeRequest(baseRequestResponse).getUrl(),"","","",temp_data));
+                log.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(baseRequestResponse),helpers.analyzeRequest(baseRequestResponse).getUrl(),"","","",temp_data));
                 fireTableRowsInserted(row, row);
             }
-
 
             //处理参数
             List<IParameter>paraList= helpers.analyzeRequest(baseRequestResponse).getParameters();
@@ -488,9 +416,11 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                             requestResponse = callbacks.makeHttpRequest(iHttpService,new_Requests);//发送请求
                         }else {
                             //不是json格式
-                            IParameter newPara = helpers.buildParameter(key, value+payload, para.getType()); //构造新的参数
-                            byte[] newRequest = helpers.updateParameter(new_Request,newPara);//更新请求包的参数
-                            requestResponse = callbacks.makeHttpRequest(iHttpService,newRequest);//发送请求
+
+                            IParameter newPara = helpers.buildParameter(key, value + payload, para.getType()); //构造新的参数
+                            byte[] newRequest = helpers.updateParameter(new_Request, newPara);//更新请求包的参数
+                            requestResponse = callbacks.makeHttpRequest(iHttpService, newRequest);//发送请求
+
                         }
 
                         //判断数据长度是否会变化
@@ -513,14 +443,13 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                             }
                         }
                         //把响应内容保存在log2中
-                        log2.add(new LogEntry(conut,4, callbacks.saveBuffersToTempFiles(requestResponse),helpers.analyzeRequest(requestResponse).getUrl(),key,value+payload,change_sign,temp_data));
+                        log2.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(requestResponse),helpers.analyzeRequest(requestResponse).getUrl(),key,value+payload,change_sign,temp_data));
 
                     }
 
                 }
             }
-        }
-        return null;
+
     }
 
     @Override
