@@ -21,9 +21,8 @@
 **********
 ### 2022-4-8
 #### xia SQL 1.8
-* 添加右键发送扫描
-![image](https://user-images.githubusercontent.com/30351807/162444264-7a5125bd-ea95-4012-8741-b139b35b7c04.png)
-
+* 新增右键发送到插件扫描
+![image](https://user-images.githubusercontent.com/30351807/162444663-ecc491e2-9a74-4d0f-8b1f-c6ce8f61546a.png)
 
 
 **********
