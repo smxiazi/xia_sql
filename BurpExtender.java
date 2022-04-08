@@ -277,7 +277,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         if(invocation.getToolFlag() == IBurpExtenderCallbacks.TOOL_REPEATER || invocation.getToolFlag() == IBurpExtenderCallbacks.TOOL_PROXY){
             //父级菜单
             IHttpRequestResponse[] responses = invocation.getSelectedMessages();
-            JMenuItem jMenu = new JMenuItem("send xia SQL");
+            JMenuItem jMenu = new JMenuItem("Send xia SQL");
 
             jMenu.addActionListener(new ActionListener() {
                 @Override
