@@ -48,7 +48,6 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
     int original_data_len;//记录原始数据包的长度
     int is_int = 1; //开关 0关 1开;//纯数据是否进行-1，-0
     String temp_data; //用于保存临时内容
-    int is_add; //用于判断是否要添加扫描
 
 
 
@@ -252,7 +251,18 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                     // create a new log entry with the message details
                     synchronized(log)
                     {
-                        BurpExtender.this.checkVul(messageInfo,toolFlag);
+                        //BurpExtender.this.checkVul(messageInfo,toolFlag);
+                        Thread thread = new Thread(new Runnable() {
+                            public void run() {
+                                try {
+                                    BurpExtender.this.checkVul(messageInfo,toolFlag);
+                                } catch (Exception ex) {
+                                    ex.printStackTrace();
+                                    BurpExtender.this.stdout.println(ex);
+                                }
+                            }
+                        });
+                        thread.start();
                     }
                 }
             }
@@ -311,6 +321,8 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
     }
 
     private void checkVul(IHttpRequestResponse baseRequestResponse, int toolFlag){
+            int is_add; //用于判断是否要添加扫描
+
             //把当前url和参数进行md5加密，用于判断该url是否已经扫描过
             List<IParameter>paraLists= helpers.analyzeRequest(baseRequestResponse).getParameters();
             temp_data = String.valueOf(helpers.analyzeRequest(baseRequestResponse).getUrl());//url
