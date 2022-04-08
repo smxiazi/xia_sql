@@ -22,6 +22,7 @@
 ### 2022-4-8
 #### xia SQL 1.8
 * 新增右键发送到插件扫描
+* 优化 监控Repeater 模式下数据包返回速度。
 ![image](https://user-images.githubusercontent.com/30351807/162444663-ecc491e2-9a74-4d0f-8b1f-c6ce8f61546a.png)
 
 
