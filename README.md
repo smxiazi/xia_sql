@@ -22,7 +22,7 @@
 ### 2022-4-11
 #### xia SQL 1.9
 * 支持json多层嵌套
-* 新增列：用时，用于后期更新自定义payload时，可以查看到所用的时间。
+* 新增列：用时，用于后期更新自定义payload时，可以查看到每个数据包所用的时间。
 ![image](https://user-images.githubusercontent.com/30351807/162653146-5caaf300-3b1c-4680-af06-e84364a5e3b4.png)
 
 
