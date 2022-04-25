@@ -20,6 +20,16 @@
 * 支持右键发送到插件扫描（哪怕之前扫描过的，仍然可以通过右键发送再次扫描）备注：右键发送一定需要有响应包，不然发不过去，这样才能对比和原数据包的长度。
 
 **********
+### 2022-4-25
+#### xia SQL 2.0
+* ui界面优化
+* 添加自定义payload功能
+
+![image](https://user-images.githubusercontent.com/30351807/165055862-c0a3a72e-918c-47b7-84ad-f74b1cb2f365.png)
+
+![image](https://user-images.githubusercontent.com/30351807/165055655-1ac9b40a-4c68-424a-b73e-f31b3b5f1162.png)
+
+**********
 ### 2022-4-11
 #### xia SQL 1.9
 * 支持json多层嵌套
