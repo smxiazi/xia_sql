@@ -27,6 +27,7 @@ import java.awt.event.ItemListener;
 import javax.swing.JMenuItem;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.swing.JTextArea;
 
 
 public class BurpExtender extends AbstractTableModel implements IBurpExtender, ITab, IHttpListener,IScannerCheck, IMessageEditorController,IContextMenuFactory
@@ -51,6 +52,9 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
     int original_data_len;//记录原始数据包的长度
     int is_int = 1; //开关 0关 1开;//纯数据是否进行-1，-0
     String temp_data; //用于保存临时内容
+    int JTextArea_int = 0;//自定义payload开关  0关 1开
+    String JTextArea_data_1 = "";//文本域的内容
+    int diy_payload_1 = 1;//自定义payload空格编码开关  0关 1开
 
 
 
@@ -65,7 +69,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         this.stdout = new PrintWriter(callbacks.getStdout(), true);
         this.stdout.println("hello xia sql!");
         this.stdout.println("你好 欢迎使用 瞎注!");
-        this.stdout.println("version:1.9");
+        this.stdout.println("version:2.0");
 
 
 
@@ -76,7 +80,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         helpers = callbacks.getHelpers();
 
         // set our extension name
-        callbacks.setExtensionName("xia SQL V1.9");
+        callbacks.setExtensionName("xia SQL V2.0");
 
         // create our UI
         SwingUtilities.invokeLater(new Runnable()
@@ -86,12 +90,14 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
             {
 
                 // main split pane
-                splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+                splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+                JSplitPane splitPanes = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+                JSplitPane splitPanes_2 = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
                 // table of log entries
                 Table logTable = new Table(BurpExtender.this);
                 JScrollPane scrollPane = new JScrollPane(logTable); //给列表添加滚动条
-                //splitPane.setLeftComponent(scrollPane); //添加在上面
+
 
                 //test
                 JPanel jp=new JPanel();
@@ -106,15 +112,34 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
                 //侧边复选框
                 JPanel jps=new JPanel();
-                jps.setLayout(new GridLayout(6, 1)); //六行一列
-                JLabel jls=new JLabel("<html>插件名：瞎注 blog:www.nmd5.com<br>版本：xia SQL V1.9<br>感谢名单：Moonlit、阿猫阿狗、Shincehor</html>");    //创建一个标签
+                jps.setLayout(new GridLayout(13, 1)); //六行一列
+                JLabel jls=new JLabel("插件名：瞎注");    //创建一个标签
+                JLabel jls_1=new JLabel("blog:www.nmd5.com");    //创建一个标签
+                JLabel jls_2=new JLabel("版本：xia SQL V2.0");    //创建一个标签
+                JLabel jls_3=new JLabel("感谢名单：Moonlit、阿猫阿狗、Shincehor");    //创建一个标签
                 JCheckBox chkbox1=new JCheckBox("启动插件", true);    //创建指定文本和状态的复选框
                 JCheckBox chkbox2=new JCheckBox("监控Repeater");    //创建指定文本的复选框
                 JCheckBox chkbox3=new JCheckBox("监控Proxy");    //创建指定文本的复选框
                 JCheckBox chkbox4=new JCheckBox("值是数字则进行-1、-0",true);    //创建指定文本的复选框
+                JLabel jls_4=new JLabel("修改payload后记得点击加载");    //创建一个标签
+                JCheckBox chkbox5=new JCheckBox("自定义payload");    //创建指定文本的复选框
+                JCheckBox chkbox6=new JCheckBox("自定义payload中空格url编码",true);    //创建指定文本的复选框
+
                 //chkbox4.setEnabled(false);//设置为不可以选择
 
                 JButton btn1=new JButton("清空列表");    //创建JButton对象
+                JButton btn2=new JButton("加载/重新加载payload");    //创建JButton对象
+
+                //自定义payload区
+                JPanel jps_2=new JPanel();
+                JTextArea jta=new JTextArea(" and 1=1\n and 1=2",19,16);
+                //jta.setLineWrap(true);    //设置文本域中的文本为自动换行
+                jta.setForeground(Color.BLACK);    //设置组件的背景色
+                jta.setFont(new Font("楷体",Font.BOLD,16));    //修改字体样式
+                jta.setBackground(Color.LIGHT_GRAY);    //设置背景色
+                jta.setEditable(false);//不可编辑状态
+                JScrollPane jsp=new JScrollPane(jta);    //将文本域放入滚动窗口
+                jps_2.add(jsp);    //将JScrollPane添加到JPanel容器中
 
                 //添加复选框监听事件
                 chkbox1.addItemListener(new ItemListener() {
@@ -166,6 +191,53 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                         }
                     }
                 });
+
+                chkbox5.addItemListener(new ItemListener() {
+                    @Override
+                    public void itemStateChanged(ItemEvent e) {
+                        if(chkbox5.isSelected()) {
+                            stdout.println("启动 自定义payload");
+                            jta.setEditable(true);
+                            jta.setBackground(Color.WHITE);    //设置背景色
+                            JTextArea_int = 1;
+
+                            if (diy_payload_1 == 1){
+                                String temp_data = jta.getText();
+                                temp_data = temp_data.replaceAll(" ","%20");
+                                JTextArea_data_1 = temp_data;
+                            }else {
+                                JTextArea_data_1 = jta.getText();
+                            }
+
+                        }else {
+                            stdout.println("关闭 自定义payload");
+                            jta.setEditable(false);
+                            jta.setBackground(Color.LIGHT_GRAY);    //设置背景色
+                            JTextArea_int = 0;
+                        }
+                    }
+                });
+
+                chkbox6.addItemListener(new ItemListener() {
+                    @Override
+                    public void itemStateChanged(ItemEvent e) {
+                        if(chkbox6.isSelected()) {
+                            stdout.println("启动 空格url编码");
+                            diy_payload_1 = 1;
+
+                            //空格url编码
+                            String temp_data = jta.getText();
+                            temp_data = temp_data.replaceAll(" ","%20");
+                            JTextArea_data_1 = temp_data;
+                        }else {
+                            stdout.println("关闭 空格url编码");
+                            diy_payload_1 = 0;
+
+                            JTextArea_data_1 = jta.getText();
+                        }
+                    }
+                });
+
                 btn1.addActionListener(new ActionListener() {//清空列表
                     @Override
                     public void actionPerformed(ActionEvent e) {
@@ -179,15 +251,35 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                     }
                 });
 
+                btn2.addActionListener(new ActionListener() {//加载自定义payload
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        if (diy_payload_1 == 1){
+                            String temp_data = jta.getText();
+                            temp_data = temp_data.replaceAll(" ","%20");
+                            JTextArea_data_1 = temp_data;
+                        }else {
+                            JTextArea_data_1 = jta.getText();
+                        }
+                    }
+                });
+
                 jps.add(jls);
+                jps.add(jls_1);
+                jps.add(jls_2);
+                jps.add(jls_3);
                 jps.add(chkbox1);
                 jps.add(chkbox2);
                 jps.add(chkbox3);
                 jps.add(chkbox4);
                 jps.add(btn1);
-                jp.add(jps);
+                jps.add(jls_4);
+                jps.add(chkbox5);
+                jps.add(chkbox6);
+                jps.add(btn2);
 
-                splitPane.setLeftComponent(jp);
+
+
 
 
                 // tabs with request/response viewers
@@ -196,7 +288,21 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 responseViewer = callbacks.createMessageEditor(BurpExtender.this, false);
                 tabs.addTab("Request", requestViewer.getComponent());
                 tabs.addTab("Response", responseViewer.getComponent());
-                splitPane.setRightComponent(tabs);//添加在下面
+
+                //jp.add(tabs);
+
+                //右边
+                splitPanes_2.setLeftComponent(jps);//上面
+                splitPanes_2.setRightComponent(jps_2);//下面
+
+                //左边
+                splitPanes.setLeftComponent(jp);//上面
+                splitPanes.setRightComponent(tabs);//下面
+
+                //整体分布
+                splitPane.setLeftComponent(splitPanes);//添加在左面
+                splitPane.setRightComponent(splitPanes_2);//添加在右面
+                splitPane.setDividerLocation(1000);//设置分割的大小
 
                 // customize our UI components
                 callbacks.customizeUiComponent(splitPane);
@@ -285,6 +391,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
     @Override
     public List<JMenuItem> createMenuItems(final IContextMenuInvocation invocation) {
+        //右键发送按钮功能
 
         List<JMenuItem> listMenuItems = new ArrayList<JMenuItem>(1);
         if(invocation.getToolFlag() == IBurpExtenderCallbacks.TOOL_REPEATER || invocation.getToolFlag() == IBurpExtenderCallbacks.TOOL_PROXY){
@@ -423,6 +530,8 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 payloads.add("'");
                 payloads.add("''");
 
+
+
                 if (para.getType() == 0 || para.getType() == 1 || para.getType() == 6){ //getTpe()就是来判断参数是在那个位置的
                     String key = para.getName();//获取参数的名称
                     String value = para.getValue();//获取参数的值
@@ -435,6 +544,15 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                         }
                     }
 
+                    //自定义payload
+                    if(JTextArea_int == 1){
+                        String[] JTextArea_data = JTextArea_data_1.split("\n");
+                        for(String a:JTextArea_data){
+                            //stdout.println(a);
+                            //stdout.println("------");
+                            payloads.add(a);
+                        }
+                    }
 
                     int change = 0; //用于判断返回包长度是否一致、保存第一次请求响应的长度
                     for (String payload : payloads) {
@@ -551,23 +669,34 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                         }
 
                         //判断数据长度是否会变化
-                        String change_sign;//第二个表格中年 变化 的内容
+                        String change_sign;//第二个表格中 变化 的内容
                         if(payload == "'" || payload == "-1" || change == 0){
                             change = requestResponse.getResponse().length;//保存第一次请求响应的长度
                             change_sign = "";
                         }else{
-                            if(change != requestResponse.getResponse().length){//判断第一次的长度和现在的是否不同
-                                if(payload == "''" && requestResponse.getResponse().length == original_data_len || payload == "-0" && requestResponse.getResponse().length == original_data_len){//判断两个单引号的长度和第一次的不一样且和原始包的长度一致
-                                    //原始包的长度和两个双引号的长度相同且和一个单引号的长度不同
-                                    change_sign = "✔ ==> ?";
-                                }else{
-                                    //第一次的包和第二次包的长度不同
-                                    change_sign = "✔";
+                            if(payload == "''" || payload == "-0" ){
+                                if(change != requestResponse.getResponse().length){//判断第一次的长度和现在的是否不同
+                                    if(payload == "''" && requestResponse.getResponse().length == original_data_len || payload == "-0" && requestResponse.getResponse().length == original_data_len){//判断两个单引号的长度和第一次的不一样且和原始包的长度一致
+                                        //原始包的长度和两个双引号的长度相同且和一个单引号的长度不同
+                                        change_sign = "✔ ==> ?";
+                                    }else{
+                                        //第一次的包和第二次包的长度不同
+                                        change_sign = "✔";
+                                    }
+                                }else {
+                                    //第一次包和第二次包的长度一样
+                                    change_sign = "";
                                 }
                             }else {
-                                //第一次包和第二次包的长度一样
-                                change_sign = "";
+                                //自定义payload
+                                if(time_2-time_1 >= 3000){
+                                    //响应时间大于3秒
+                                    change_sign = "time > 3";
+                                }else {
+                                    change_sign = "diy payload";
+                                }
                             }
+
                         }
                         //把响应内容保存在log2中
                         log2.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(requestResponse),helpers.analyzeRequest(requestResponse).getUrl(),key,value+payload,change_sign,temp_data,time_2-time_1));
@@ -716,6 +845,9 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
             }
         }
     }
+
+
+
 
     //
     // implement IMessageEditorController
