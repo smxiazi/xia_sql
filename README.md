@@ -24,6 +24,7 @@
 #### xia SQL 2.0
 * ui界面优化
 * 添加自定义payload功能
+* 自定义payload访问网站时间大于3秒，将显示 time > 3。
 
 ![image](https://user-images.githubusercontent.com/30351807/165055862-c0a3a72e-918c-47b7-84ad-f74b1cb2f365.png)
 
