@@ -24,6 +24,13 @@
 
 
 **********
+### 2022-5-12
+#### xia SQL 2.1
+* 新增 自定义payload中参数值置空
+
+![image](https://user-images.githubusercontent.com/30351807/168087873-1e57c10d-cf66-4783-af1e-3d075f629c4d.png)
+
+**********
 ### 2022-4-25
 #### xia SQL 2.0
 * ui界面优化
