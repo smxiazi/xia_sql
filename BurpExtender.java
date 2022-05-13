@@ -55,6 +55,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
     int JTextArea_int = 0;//自定义payload开关  0关 1开
     String JTextArea_data_1 = "";//文本域的内容
     int diy_payload_1 = 1;//自定义payload空格编码开关  0关 1开
+    int diy_payload_2 = 0;//自定义payload值置空开关  0关 1开
 
 
 
@@ -69,7 +70,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         this.stdout = new PrintWriter(callbacks.getStdout(), true);
         this.stdout.println("hello xia sql!");
         this.stdout.println("你好 欢迎使用 瞎注!");
-        this.stdout.println("version:2.0");
+        this.stdout.println("version:2.1");
 
 
 
@@ -80,7 +81,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         helpers = callbacks.getHelpers();
 
         // set our extension name
-        callbacks.setExtensionName("xia SQL V2.0");
+        callbacks.setExtensionName("xia SQL V2.1");
 
         // create our UI
         SwingUtilities.invokeLater(new Runnable()
@@ -112,10 +113,10 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
                 //侧边复选框
                 JPanel jps=new JPanel();
-                jps.setLayout(new GridLayout(13, 1)); //六行一列
+                jps.setLayout(new GridLayout(14, 1)); //六行一列
                 JLabel jls=new JLabel("插件名：瞎注");    //创建一个标签
                 JLabel jls_1=new JLabel("blog:www.nmd5.com");    //创建一个标签
-                JLabel jls_2=new JLabel("版本：xia SQL V2.0");    //创建一个标签
+                JLabel jls_2=new JLabel("版本：xia SQL V2.1");    //创建一个标签
                 JLabel jls_3=new JLabel("感谢名单：Moonlit、阿猫阿狗、Shincehor");    //创建一个标签
                 JCheckBox chkbox1=new JCheckBox("启动插件", true);    //创建指定文本和状态的复选框
                 JCheckBox chkbox2=new JCheckBox("监控Repeater");    //创建指定文本的复选框
@@ -124,6 +125,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 JLabel jls_4=new JLabel("修改payload后记得点击加载");    //创建一个标签
                 JCheckBox chkbox5=new JCheckBox("自定义payload");    //创建指定文本的复选框
                 JCheckBox chkbox6=new JCheckBox("自定义payload中空格url编码",true);    //创建指定文本的复选框
+                JCheckBox chkbox7=new JCheckBox("自定义payload中参数值置空");    //创建指定文本的复选框
 
                 //chkbox4.setEnabled(false);//设置为不可以选择
 
@@ -132,7 +134,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
                 //自定义payload区
                 JPanel jps_2=new JPanel();
-                JTextArea jta=new JTextArea(" and 1=1\n and 1=2",19,16);
+                JTextArea jta=new JTextArea(" and 1=1\n and 1=2",18,16);
                 //jta.setLineWrap(true);    //设置文本域中的文本为自动换行
                 jta.setForeground(Color.BLACK);    //设置组件的背景色
                 jta.setFont(new Font("楷体",Font.BOLD,16));    //修改字体样式
@@ -238,6 +240,19 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                     }
                 });
 
+                chkbox7.addItemListener(new ItemListener() {
+                    @Override
+                    public void itemStateChanged(ItemEvent e) {
+                        if(chkbox7.isSelected()) {
+                            stdout.println("启动 自定义payload参数值置空");
+                            diy_payload_2 = 1;
+                        }else {
+                            stdout.println("关闭 自定义payload参数值置空");
+                            diy_payload_2 = 0;
+                        }
+                    }
+                });
+
                 btn1.addActionListener(new ActionListener() {//清空列表
                     @Override
                     public void actionPerformed(ActionEvent e) {
@@ -276,6 +291,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 jps.add(jls_4);
                 jps.add(chkbox5);
                 jps.add(chkbox6);
+                jps.add(chkbox7);
                 jps.add(btn2);
 
 
@@ -557,6 +573,16 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                     int change = 0; //用于判断返回包长度是否一致、保存第一次请求响应的长度
                     for (String payload : payloads) {
                         int time_1 = 0,time_2 = 0;
+
+                        if(JTextArea_int == 1){
+                            //自定义payload //参数值为空
+                            if(diy_payload_2 == 1){
+                                if(payload != "'" && payload !="''" && payload != "-1" && payload != "-0"){
+                                    value = "";
+                                }
+                            }
+                        }
+
                         stdout.println(key+":"+value+payload);//输出添加payload的键和值
                         IHttpService iHttpService = baseRequestResponse.getHttpService();
 
@@ -658,8 +684,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                             }
                         }else {
                             //不是json格式
-
-                            IParameter newPara = helpers.buildParameter(key, value + payload, para.getType()); //构造新的参数
+                            IParameter newPara = helpers.buildParameter(key,value + payload, para.getType()); //构造新的参数
                             byte[] newRequest = helpers.updateParameter(new_Request, newPara);//更新请求包的参数
 
                             time_1 = (int) System.currentTimeMillis();
