@@ -70,7 +70,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         this.stdout = new PrintWriter(callbacks.getStdout(), true);
         this.stdout.println("hello xia sql!");
         this.stdout.println("你好 欢迎使用 瞎注!");
-        this.stdout.println("version:2.1");
+        this.stdout.println("version:2.2");
 
 
 
@@ -81,7 +81,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         helpers = callbacks.getHelpers();
 
         // set our extension name
-        callbacks.setExtensionName("xia SQL V2.1");
+        callbacks.setExtensionName("xia SQL V2.2");
 
         // create our UI
         SwingUtilities.invokeLater(new Runnable()
@@ -116,7 +116,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 jps.setLayout(new GridLayout(14, 1)); //六行一列
                 JLabel jls=new JLabel("插件名：瞎注");    //创建一个标签
                 JLabel jls_1=new JLabel("blog:www.nmd5.com");    //创建一个标签
-                JLabel jls_2=new JLabel("版本：xia SQL V2.1");    //创建一个标签
+                JLabel jls_2=new JLabel("版本：xia SQL V2.2");    //创建一个标签
                 JLabel jls_3=new JLabel("感谢名单：Moonlit、阿猫阿狗、Shincehor");    //创建一个标签
                 JCheckBox chkbox1=new JCheckBox("启动插件", true);    //创建指定文本和状态的复选框
                 JCheckBox chkbox2=new JCheckBox("监控Repeater");    //创建指定文本的复选框
@@ -369,7 +369,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
     {
 
         if(switchs == 1){//插件开关
-            if(toolFlag == clicks_Repeater){//监听Repeater
+            if(toolFlag == clicks_Repeater || toolFlag == clicks_Proxy){//监听Repeater
                 // only process responses
                 if (!messageIsRequest)
                 {
@@ -398,10 +398,6 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
     @Override
     public List<IScanIssue> doPassiveScan(IHttpRequestResponse baseRequestResponse) {
-        if(clicks_Proxy == 4 && switchs == 1)
-        {
-            BurpExtender.this.checkVul(baseRequestResponse,4);
-        }
         return null;
     }
 
@@ -455,7 +451,22 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
             //stdout.println(temp_data);
             String[] temp_data_strarray=temp_data.split("\\?");
             String temp_data =(String) temp_data_strarray[0];//获取问号前面的字符串
-            //stdout.println(temp_data);
+
+            //用于判断页面后缀是否为静态文件
+            if(toolFlag == 4 || toolFlag ==64){//流量是Repeater与proxy来的就对其后缀判断
+                String[] static_file = {"jpg","png","gif","css","js","pdf","mp3","mp4","avi"};
+                String[] static_file_1 =temp_data.split("\\.");
+                String static_file_2 = static_file_1[static_file_1.length-1];//获取最后一个.内容
+                //this.stdout.println(static_file_2);
+                for(String i:static_file){
+                    if(static_file_2.equals(i)){
+                        this.stdout.println("当前url为静态文件："+temp_data+"\n");
+                        return;
+                    }
+                }
+            }
+
+        //stdout.println(temp_data);
 
             String request_data = null;
             String[] request_datas;
