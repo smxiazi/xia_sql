@@ -19,8 +19,8 @@
 * 支持`右键发送到插件扫描`（哪怕之前扫描过的，仍然可以通过右键发送再次扫描）备注：右键发送一定需要有响应包，不然发不过去，这样才能对比和原数据包的长度。
 * 支持`自定义payload`。
 * 支持自定义payload中的参数值`置空`。
-* 监控Proxy 为被动扫描模式，`优先返回响应包`，后台再发送payload。
-* 监控Repeater 为主动扫描模式，`优先发送payload`，待发送完payload后再返回响应包（V1.8以上版本已优化）。
+* 监控Proxy流量。
+* 监控Repeater流量。
 * 同个数据包只扫描一次，算法：`MD5(不带参数的url+参数名+POST/GET)`。
 
 
@@ -28,7 +28,7 @@
 ### 2022-5-20
 #### xia SQL 2.2
 * 优化proxy模式有时流量不过来问题。
-* 优化Proxy、Repeater 模式下，静态资源不处理。后缀：jpg、png、gif、css、js、pdf、mp3、mp4、avi
+* 优化Proxy、Repeater 模式下，静态资源不处理。后缀：jpg、png、gif、css、js、pdf、mp3、mp4、avi`(右键发送不影响)`
 
 ![image](https://user-images.githubusercontent.com/30351807/169476496-e2a7351b-f701-42f8-b56b-a8d411ab6eca.png)
 
