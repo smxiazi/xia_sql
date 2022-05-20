@@ -25,6 +25,14 @@
 
 
 **********
+### 2022-5-20
+#### xia SQL 2.2
+* 优化proxy模式有时流量不过来问题。
+* 优化Proxy、Repeater 模式下，静态资源不处理。后缀：jpg、png、gif、css、js、pdf、mp3、mp4、avi
+
+![image](https://user-images.githubusercontent.com/30351807/169476158-5dfdb9c3-b831-464a-9c76-08ee0077b66a.png)
+
+**********
 ### 2022-5-12
 #### xia SQL 2.1
 * 新增 自定义payload中参数值置空
