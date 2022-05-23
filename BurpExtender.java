@@ -59,6 +59,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
 
 
+
     //
     // implement IBurpExtender
     //
@@ -70,7 +71,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         this.stdout = new PrintWriter(callbacks.getStdout(), true);
         this.stdout.println("hello xia sql!");
         this.stdout.println("你好 欢迎使用 瞎注!");
-        this.stdout.println("version:2.2");
+        this.stdout.println("version:2.3");
 
 
 
@@ -81,7 +82,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         helpers = callbacks.getHelpers();
 
         // set our extension name
-        callbacks.setExtensionName("xia SQL V2.2");
+        callbacks.setExtensionName("xia SQL V2.3");
 
         // create our UI
         SwingUtilities.invokeLater(new Runnable()
@@ -116,7 +117,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 jps.setLayout(new GridLayout(14, 1)); //六行一列
                 JLabel jls=new JLabel("插件名：瞎注");    //创建一个标签
                 JLabel jls_1=new JLabel("blog:www.nmd5.com");    //创建一个标签
-                JLabel jls_2=new JLabel("版本：xia SQL V2.2");    //创建一个标签
+                JLabel jls_2=new JLabel("版本：xia SQL V2.3");    //创建一个标签
                 JLabel jls_3=new JLabel("感谢名单：Moonlit、阿猫阿狗、Shincehor");    //创建一个标签
                 JCheckBox chkbox1=new JCheckBox("启动插件", true);    //创建指定文本和状态的复选框
                 JCheckBox chkbox2=new JCheckBox("监控Repeater");    //创建指定文本的复选框
@@ -444,6 +445,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
     private void checkVul(IHttpRequestResponse baseRequestResponse, int toolFlag){
             int is_add; //用于判断是否要添加扫描
+            String change_sign_1 = ""; //用于显示第一个列表框的状态 变化 部分的内容
 
             //把当前url和参数进行md5加密，用于判断该url是否已经扫描过
             List<IParameter>paraLists= helpers.analyzeRequest(baseRequestResponse).getParameters();
@@ -538,7 +540,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 int row = log.size();
                 original_data_len = callbacks.saveBuffersToTempFiles(baseRequestResponse).getResponse().length;//更新原始数据包的长度
 
-                log.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(baseRequestResponse),helpers.analyzeRequest(baseRequestResponse).getUrl(),"","","",temp_data,0));
+                log.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(baseRequestResponse),helpers.analyzeRequest(baseRequestResponse).getUrl(),"","","",temp_data,0,"run……"));
                 fireTableRowsInserted(row, row);
             }
 
@@ -715,9 +717,11 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                                     if(payload == "''" && requestResponse.getResponse().length == original_data_len || payload == "-0" && requestResponse.getResponse().length == original_data_len){//判断两个单引号的长度和第一次的不一样且和原始包的长度一致
                                         //原始包的长度和两个双引号的长度相同且和一个单引号的长度不同
                                         change_sign = "✔ ==> ?";
+                                        change_sign_1 = " ✔";
                                     }else{
                                         //第一次的包和第二次包的长度不同
                                         change_sign = "✔";
+                                        change_sign_1 = " ✔";
                                     }
                                 }else {
                                     //第一次包和第二次包的长度一样
@@ -728,6 +732,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                                 if(time_2-time_1 >= 3000){
                                     //响应时间大于3秒
                                     change_sign = "time > 3";
+                                    change_sign_1 = " ✔";
                                 }else {
                                     change_sign = "diy payload";
                                 }
@@ -735,13 +740,22 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
                         }
                         //把响应内容保存在log2中
-                        log2.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(requestResponse),helpers.analyzeRequest(requestResponse).getUrl(),key,value+payload,change_sign,temp_data,time_2-time_1));
+                        log2.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(requestResponse),helpers.analyzeRequest(requestResponse).getUrl(),key,value+payload,change_sign,temp_data,time_2-time_1,"end"));
 
                     }
-
                 }
-
             }
+
+        //用于更新是否已经跑完所有payload的状态
+        for(int i = 0; i < log.size(); i++){
+            if(temp_data.equals(log.get(i).data_md5)){
+                log.get(i).setState("end!"+change_sign_1);
+                //stdout.println("ok");
+            }
+        }
+        //刷新第一个列表框
+        BurpExtender.this.fireTableRowsInserted(log.size(), log.size());
+        BurpExtender.this.fireTableDataChanged();
 
     }
 
@@ -770,7 +784,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
     @Override
     public int getColumnCount()
     {
-        return 4;
+        return 5;
     }
 
     @Override
@@ -786,6 +800,8 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 return "URL";
             case 3:
                 return "返回包长度";
+            case 4:
+                return "状态";
             default:
                 return "";
         }
@@ -812,6 +828,8 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 return logEntry.url.toString();
             case 3:
                 return logEntry.requestResponse.getResponse().length;//返回响应包的长度
+            case 4:
+                return logEntry.state;
             default:
                 return "";
         }
@@ -989,9 +1007,10 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         final String change;
         final String data_md5;
         final int times;
+        String state;
 
 
-        LogEntry(int id,int tool, IHttpRequestResponsePersisted requestResponse, URL url,String parameter,String value,String change,String data_md5,int times)
+        LogEntry(int id,int tool, IHttpRequestResponsePersisted requestResponse, URL url,String parameter,String value,String change,String data_md5,int times,String state)
         {
             this.id = id;
             this.tool = tool;
@@ -1002,6 +1021,12 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
             this.change = change;
             this.data_md5 = data_md5;
             this.times = times;
+            this.state = state;
+        }
+
+        public String setState(String state){
+            this.state = state;
+            return this.state;
         }
     }
 
