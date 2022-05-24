@@ -56,6 +56,9 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
     String JTextArea_data_1 = "";//文本域的内容
     int diy_payload_1 = 1;//自定义payload空格编码开关  0关 1开
     int diy_payload_2 = 0;//自定义payload值置空开关  0关 1开
+    int select_row = 0;//选中表格的行数
+    Table logTable; //第一个表格框
+
 
 
 
@@ -97,7 +100,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 JSplitPane splitPanes_2 = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
                 // table of log entries
-                Table logTable = new Table(BurpExtender.this);
+                logTable = new Table(BurpExtender.this);
                 JScrollPane scrollPane = new JScrollPane(logTable); //给列表添加滚动条
 
 
@@ -341,7 +344,6 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
             }
         });
     }
-
     //
     // implement ITab
     //
@@ -753,9 +755,14 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 //stdout.println("ok");
             }
         }
+
         //刷新第一个列表框
-        BurpExtender.this.fireTableRowsInserted(log.size(), log.size());
+        //BurpExtender.this.fireTableRowsInserted(log.size(), log.size());
         BurpExtender.this.fireTableDataChanged();
+        //第一个表格 继续选中之前选中的值
+        BurpExtender.this.logTable.setRowSelectionInterval(BurpExtender.this.select_row-1,BurpExtender.this.select_row-1);
+
+
 
     }
 
@@ -944,6 +951,8 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
             LogEntry logEntry = log.get(row);
             data_md5_id = logEntry.data_md5;
             //stdout.println(log_id);//输出目前选中的行数
+            select_row = logEntry.id;
+
             log3.clear();
             for (int i = 0; i < log2.size(); i++) {//筛选出目前选中的原始数据包--》衍生出的带有payload的数据包
                  if(log2.get(i).data_md5==data_md5_id){
