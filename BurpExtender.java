@@ -58,6 +58,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
     int diy_payload_2 = 0;//自定义payload值置空开关  0关 1开
     int select_row = 0;//选中表格的行数
     Table logTable; //第一个表格框
+    int is_cookie = -1;//cookie是否要注入，-1关闭 2开启。
 
 
 
@@ -74,7 +75,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         this.stdout = new PrintWriter(callbacks.getStdout(), true);
         this.stdout.println("hello xia sql!");
         this.stdout.println("你好 欢迎使用 瞎注!");
-        this.stdout.println("version:2.3");
+        this.stdout.println("version:2.4");
 
 
 
@@ -85,7 +86,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         helpers = callbacks.getHelpers();
 
         // set our extension name
-        callbacks.setExtensionName("xia SQL V2.3");
+        callbacks.setExtensionName("xia SQL V2.4");
 
         // create our UI
         SwingUtilities.invokeLater(new Runnable()
@@ -117,10 +118,10 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
                 //侧边复选框
                 JPanel jps=new JPanel();
-                jps.setLayout(new GridLayout(14, 1)); //六行一列
+                jps.setLayout(new GridLayout(15, 1)); //六行一列
                 JLabel jls=new JLabel("插件名：瞎注");    //创建一个标签
                 JLabel jls_1=new JLabel("blog:www.nmd5.com");    //创建一个标签
-                JLabel jls_2=new JLabel("版本：xia SQL V2.3");    //创建一个标签
+                JLabel jls_2=new JLabel("版本：xia SQL V2.4");    //创建一个标签
                 JLabel jls_3=new JLabel("感谢名单：Moonlit、阿猫阿狗、Shincehor");    //创建一个标签
                 JCheckBox chkbox1=new JCheckBox("启动插件", true);    //创建指定文本和状态的复选框
                 JCheckBox chkbox2=new JCheckBox("监控Repeater");    //创建指定文本的复选框
@@ -130,6 +131,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 JCheckBox chkbox5=new JCheckBox("自定义payload");    //创建指定文本的复选框
                 JCheckBox chkbox6=new JCheckBox("自定义payload中空格url编码",true);    //创建指定文本的复选框
                 JCheckBox chkbox7=new JCheckBox("自定义payload中参数值置空");    //创建指定文本的复选框
+                JCheckBox chkbox8=new JCheckBox("测试Cookie");    //创建指定文本的复选框
 
                 //chkbox4.setEnabled(false);//设置为不可以选择
 
@@ -138,7 +140,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
                 //自定义payload区
                 JPanel jps_2=new JPanel();
-                JTextArea jta=new JTextArea(" and 1=1\n and 1=2",18,16);
+                JTextArea jta=new JTextArea("%df' and sleep(3)%23\n'and '1'='1",18,16);
                 //jta.setLineWrap(true);    //设置文本域中的文本为自动换行
                 jta.setForeground(Color.BLACK);    //设置组件的背景色
                 jta.setFont(new Font("楷体",Font.BOLD,16));    //修改字体样式
@@ -257,6 +259,19 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                     }
                 });
 
+                chkbox8.addItemListener(new ItemListener() {
+                    @Override
+                    public void itemStateChanged(ItemEvent e) {
+                        if(chkbox8.isSelected()) {
+                            stdout.println("启动 测试Cookie");
+                            is_cookie = 2;
+                        }else {
+                            stdout.println("关闭 测试Cookie");
+                            is_cookie = -1;
+                        }
+                    }
+                });
+
                 btn1.addActionListener(new ActionListener() {//清空列表
                     @Override
                     public void actionPerformed(ActionEvent e) {
@@ -291,12 +306,14 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 jps.add(chkbox2);
                 jps.add(chkbox3);
                 jps.add(chkbox4);
+                jps.add(chkbox8);
                 jps.add(btn1);
                 jps.add(jls_4);
                 jps.add(chkbox5);
                 jps.add(chkbox6);
                 jps.add(chkbox7);
                 jps.add(btn2);
+
 
 
 
@@ -476,7 +493,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
             String[] request_datas;
             is_add = 0;
             for (IParameter para : paraLists){// 循环获取参数，判断类型，再构造新的参数，合并到新的请求包中。
-                if (para.getType() == 0 || para.getType() == 1 || para.getType() == 6) { //getTpe()就是来判断参数是在那个位置的
+                if (para.getType() == 0 || para.getType() == 1 || para.getType() == 6 || para.getType() == is_cookie) { //getTpe()就是来判断参数是在那个位置的
                     if(is_add == 0){
                         is_add = 1;
                     }
@@ -563,7 +580,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
 
 
-                if (para.getType() == 0 || para.getType() == 1 || para.getType() == 6){ //getTpe()就是来判断参数是在那个位置的
+                if (para.getType() == 0 || para.getType() == 1 || para.getType() == 6 || para.getType() == is_cookie){ //getTpe()就是来判断参数是在那个位置的
                     String key = para.getName();//获取参数的名称
                     String value = para.getValue();//获取参数的值
                     stdout.println(key+":"+value);//输出原始的键值数据
