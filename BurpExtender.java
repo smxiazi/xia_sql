@@ -75,7 +75,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         this.stdout = new PrintWriter(callbacks.getStdout(), true);
         this.stdout.println("hello xia sql!");
         this.stdout.println("你好 欢迎使用 瞎注!");
-        this.stdout.println("version:2.4");
+        this.stdout.println("version:2.5");
 
 
 
@@ -86,7 +86,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         helpers = callbacks.getHelpers();
 
         // set our extension name
-        callbacks.setExtensionName("xia SQL V2.4");
+        callbacks.setExtensionName("xia SQL V2.5");
 
         // create our UI
         SwingUtilities.invokeLater(new Runnable()
@@ -121,7 +121,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 jps.setLayout(new GridLayout(15, 1)); //六行一列
                 JLabel jls=new JLabel("插件名：瞎注");    //创建一个标签
                 JLabel jls_1=new JLabel("blog:www.nmd5.com");    //创建一个标签
-                JLabel jls_2=new JLabel("版本：xia SQL V2.4");    //创建一个标签
+                JLabel jls_2=new JLabel("版本：xia SQL V2.5");    //创建一个标签
                 JLabel jls_3=new JLabel("感谢名单：Moonlit、阿猫阿狗、Shincehor");    //创建一个标签
                 JCheckBox chkbox1=new JCheckBox("启动插件", true);    //创建指定文本和状态的复选框
                 JCheckBox chkbox2=new JCheckBox("监控Repeater");    //创建指定文本的复选框
@@ -507,8 +507,8 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                             //stdout.println(request_data);
 
                             //json嵌套
-                            request_datas = request_data.split("\\{\"");
-                            if(request_datas.length >2){
+                            request_datas = request_data.split("\\{");
+                            if(request_datas.length >1){
                                 is_add = 2;
                             }
                             //json中有列表
@@ -648,6 +648,9 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                                 time_2 = (int) System.currentTimeMillis();
                             }else if (is_add ==2){
                                 //json嵌套
+                                request_data = request_data.replaceAll("\r","");//burp2.x json自动格式美化处理
+                                request_data = request_data.replaceAll("\n","");//burp2.x json自动格式美化处理
+
                                 String[] request_data_temp = request_data.split(",");//用于临时保存切割的post体内容
                                 String request_data_body = "";String request_data_body_temp = "";//修改后的body和需要临时编辑的字符串
 
@@ -675,7 +678,9 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                                             if(request_data_body_temp.contains("\"")){//判断内容是否为字符串
                                                 request_data_body_temp = request_data_temp[i];
                                                 //修改内容，添加payload
+                                                stdout.println("777777777777");
                                                 request_data_body_temp = request_data_body_temp.replaceAll("^(.*:.*?\")(.*?)(\"[^\"]*)$","$1$2"+payload+"$3");
+                                                stdout.println(request_data_body_temp);
                                                 request_data_body+= request_data_body_temp +",";
                                             }else {
                                                 request_data_body_temp = request_data_temp[i];
