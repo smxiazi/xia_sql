@@ -25,7 +25,14 @@
 * 同个数据包只扫描一次，算法：`MD5(不带参数的url+参数名+POST/GET)`。
 
 
-<img width="965" alt="image" src="https://user-images.githubusercontent.com/30351807/174958181-157a1886-325d-4560-9c8c-9ceb674b8980.png">
+**********
+### 2022-6-22
+#### xia SQL 2.6
+* 新增变化中具体长度变化多少的值
+* 修复已知bug
+
+<img width="1204" alt="image" src="https://user-images.githubusercontent.com/30351807/174958750-50d6e51b-bf3f-4d92-aacd-d0d3b0c65224.png">
+
 
 **********
 ### 2022-6-6
