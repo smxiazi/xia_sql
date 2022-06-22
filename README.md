@@ -25,6 +25,8 @@
 * 同个数据包只扫描一次，算法：`MD5(不带参数的url+参数名+POST/GET)`。
 
 
+<img width="965" alt="image" src="https://user-images.githubusercontent.com/30351807/174958181-157a1886-325d-4560-9c8c-9ceb674b8980.png">
+
 **********
 ### 2022-6-6
 #### xia SQL 2.5
