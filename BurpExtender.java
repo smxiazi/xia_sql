@@ -75,7 +75,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         this.stdout = new PrintWriter(callbacks.getStdout(), true);
         this.stdout.println("hello xia sql!");
         this.stdout.println("你好 欢迎使用 瞎注!");
-        this.stdout.println("version:2.5");
+        this.stdout.println("version:2.6");
 
 
 
@@ -86,7 +86,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         helpers = callbacks.getHelpers();
 
         // set our extension name
-        callbacks.setExtensionName("xia SQL V2.5");
+        callbacks.setExtensionName("xia SQL V2.6");
 
         // create our UI
         SwingUtilities.invokeLater(new Runnable()
@@ -119,9 +119,9 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 //侧边复选框
                 JPanel jps=new JPanel();
                 jps.setLayout(new GridLayout(15, 1)); //六行一列
-                JLabel jls=new JLabel("插件名：瞎注");    //创建一个标签
+                JLabel jls=new JLabel("插件名：瞎注 author：算命縖子");    //创建一个标签
                 JLabel jls_1=new JLabel("blog:www.nmd5.com");    //创建一个标签
-                JLabel jls_2=new JLabel("版本：xia SQL V2.5");    //创建一个标签
+                JLabel jls_2=new JLabel("版本：xia SQL V2.6");    //创建一个标签
                 JLabel jls_3=new JLabel("感谢名单：Moonlit、阿猫阿狗、Shincehor");    //创建一个标签
                 JCheckBox chkbox1=new JCheckBox("启动插件", true);    //创建指定文本和状态的复选框
                 JCheckBox chkbox2=new JCheckBox("监控Repeater");    //创建指定文本的复选框
@@ -651,7 +651,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                                 request_data = request_data.replaceAll("\r","");//burp2.x json自动格式美化处理
                                 request_data = request_data.replaceAll("\n","");//burp2.x json自动格式美化处理
 
-                                String[] request_data_temp = request_data.split(",");//用于临时保存切割的post体内容
+                                String[] request_data_temp = request_data.split(",\"");//用于临时保存切割的post体内容
                                 String request_data_body = "";String request_data_body_temp = "";//修改后的body和需要临时编辑的字符串
 
                                 for(int i=0;i < request_data_temp.length;i++){
@@ -744,7 +744,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                                         change_sign_1 = " ✔";
                                     }else{
                                         //第一次的包和第二次包的长度不同
-                                        change_sign = "✔";
+                                        change_sign = "✔ "+ (change-requestResponse.getResponse().length);
                                         change_sign_1 = " ✔";
                                     }
                                 }else {
