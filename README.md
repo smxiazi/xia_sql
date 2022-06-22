@@ -28,7 +28,7 @@
 **********
 ### 2022-6-22
 #### xia SQL 2.6
-* 新增变化中具体长度变化多少的值
+* 新增变化中具体长度变化多少的值（如果变化的值小于等于4基本上是误报）
 * 修复已知bug
 
 <img width="1204" alt="image" src="https://user-images.githubusercontent.com/30351807/174958750-50d6e51b-bf3f-4d92-aacd-d0d3b0c65224.png">
