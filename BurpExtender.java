@@ -28,6 +28,8 @@ import javax.swing.JMenuItem;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
+
 
 
 public class BurpExtender extends AbstractTableModel implements IBurpExtender, ITab, IHttpListener,IScannerCheck, IMessageEditorController,IContextMenuFactory
@@ -59,6 +61,8 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
     int select_row = 0;//选中表格的行数
     Table logTable; //第一个表格框
     int is_cookie = -1;//cookie是否要注入，-1关闭 2开启。
+    String white_URL = "";
+    int white_switchs = 0;//白名单开关
 
 
 
@@ -75,7 +79,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         this.stdout = new PrintWriter(callbacks.getStdout(), true);
         this.stdout.println("hello xia sql!");
         this.stdout.println("你好 欢迎使用 瞎注!");
-        this.stdout.println("version:2.6");
+        this.stdout.println("version:2.7");
 
 
 
@@ -86,7 +90,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         helpers = callbacks.getHelpers();
 
         // set our extension name
-        callbacks.setExtensionName("xia SQL V2.6");
+        callbacks.setExtensionName("xia SQL V2.7");
 
         // create our UI
         SwingUtilities.invokeLater(new Runnable()
@@ -118,10 +122,10 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
                 //侧边复选框
                 JPanel jps=new JPanel();
-                jps.setLayout(new GridLayout(15, 1)); //六行一列
+                jps.setLayout(new GridLayout(18, 1)); //六行一列
                 JLabel jls=new JLabel("插件名：瞎注 author：算命縖子");    //创建一个标签
                 JLabel jls_1=new JLabel("blog:www.nmd5.com");    //创建一个标签
-                JLabel jls_2=new JLabel("版本：xia SQL V2.6");    //创建一个标签
+                JLabel jls_2=new JLabel("版本：xia SQL V2.7");    //创建一个标签
                 JLabel jls_3=new JLabel("感谢名单：Moonlit、阿猫阿狗、Shincehor");    //创建一个标签
                 JCheckBox chkbox1=new JCheckBox("启动插件", true);    //创建指定文本和状态的复选框
                 JCheckBox chkbox2=new JCheckBox("监控Repeater");    //创建指定文本的复选框
@@ -132,11 +136,14 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 JCheckBox chkbox6=new JCheckBox("自定义payload中空格url编码",true);    //创建指定文本的复选框
                 JCheckBox chkbox7=new JCheckBox("自定义payload中参数值置空");    //创建指定文本的复选框
                 JCheckBox chkbox8=new JCheckBox("测试Cookie");    //创建指定文本的复选框
+                JLabel jls_5=new JLabel("");    //创建一个标签
+                JTextField textField = new JTextField("填写白名单域名");//白名单文本框
 
                 //chkbox4.setEnabled(false);//设置为不可以选择
 
                 JButton btn1=new JButton("清空列表");    //创建JButton对象
                 JButton btn2=new JButton("加载/重新加载payload");    //创建JButton对象
+                JButton btn3=new JButton("启动白名单");    //处理白名单
 
                 //自定义payload区
                 JPanel jps_2=new JPanel();
@@ -297,6 +304,23 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                         }
                     }
                 });
+                btn3.addActionListener(new ActionListener() {//加载自定义payload
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        if(btn3.getText().equals("启动白名单")){
+                            btn3.setText("关闭白名单");
+                            white_URL = textField.getText();
+                            white_switchs = 1;
+                            textField.setEditable(false);
+                            textField.setForeground(Color.GRAY);//设置组件的背景色
+                        }else {
+                            btn3.setText("启动白名单");
+                            white_switchs = 0;
+                            textField.setEditable(true);
+                            textField.setForeground(Color.BLACK);
+                        }
+                    }
+                });
 
                 jps.add(jls);
                 jps.add(jls_1);
@@ -308,6 +332,9 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 jps.add(chkbox4);
                 jps.add(chkbox8);
                 jps.add(btn1);
+                jps.add(jls_5);
+                jps.add(textField);
+                jps.add(btn3);
                 jps.add(jls_4);
                 jps.add(chkbox5);
                 jps.add(chkbox6);
@@ -463,6 +490,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
     }
 
     private void checkVul(IHttpRequestResponse baseRequestResponse, int toolFlag){
+
             int is_add; //用于判断是否要添加扫描
             String change_sign_1 = ""; //用于显示第一个列表框的状态 变化 部分的内容
 
@@ -472,6 +500,16 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
             //stdout.println(temp_data);
             String[] temp_data_strarray=temp_data.split("\\?");
             String temp_data =(String) temp_data_strarray[0];//获取问号前面的字符串
+
+            //检测白名单
+            if(white_switchs == 1){
+                if(temp_data.contains(white_URL)){
+                    this.stdout.println("白名单URL！"+temp_data);
+                }else {
+                    this.stdout.println("不是白名单URL！"+temp_data);
+                    return;
+                }
+            }
 
             //用于判断页面后缀是否为静态文件
             if(toolFlag == 4 || toolFlag ==64){//流量是Repeater与proxy来的就对其后缀判断
@@ -508,7 +546,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
                             //json嵌套
                             request_datas = request_data.split("\\{");
-                            if(request_datas.length >1){
+                            if(request_datas.length >2){
                                 is_add = 2;
                             }
                             //json中有列表
@@ -555,11 +593,21 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 stdout.println(is_add);
                 stdout.println(request_data);
 
-                conut += 1;
                 int row = log.size();
-                original_data_len = callbacks.saveBuffersToTempFiles(baseRequestResponse).getResponse().length;//更新原始数据包的长度
+                try{
+                    original_data_len = callbacks.saveBuffersToTempFiles(baseRequestResponse).getResponse().length;//更新原始数据包的长度
+                    stdout.println(original_data_len);
+                    if(original_data_len <= 0){
+                        stdout.println("该数据包无响应");
+                        return;
+                    }
+                } catch (Exception ex) {
+                    stdout.println("该数据包无响应");
+                    return;
+                }
 
-                log.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(baseRequestResponse),helpers.analyzeRequest(baseRequestResponse).getUrl(),"","","",temp_data,0,"run……"));
+                log.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(baseRequestResponse),helpers.analyzeRequest(baseRequestResponse).getUrl(),"","","",temp_data,0,"run……",999));
+                conut += 1;
                 fireTableRowsInserted(row, row);
             }
 
@@ -568,11 +616,17 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
             byte[] new_Request = baseRequestResponse.getRequest();
             int json_count = -1;//记录json嵌套次数
 
-
+            //****************************************
+            // 循环获取参数
+            //****************************************
+            String para_name = "";//用来记录上一次循环的参数名
             for (IParameter para : paraList){// 循环获取参数
+                int switch_para = 0;//用来判断该参数是否要处理 0 要处理 1 跳过
+
                 if(para.getType() == 6){
-                    json_count += 1;//记录json嵌套次数
+                    json_count += 1;
                 }
+
                 //payload
                 ArrayList<String> payloads = new ArrayList<>();
                 payloads.add("'");
@@ -583,7 +637,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 if (para.getType() == 0 || para.getType() == 1 || para.getType() == 6 || para.getType() == is_cookie){ //getTpe()就是来判断参数是在那个位置的
                     String key = para.getName();//获取参数的名称
                     String value = para.getValue();//获取参数的值
-                    stdout.println(key+":"+value);//输出原始的键值数据
+                    stdout.println("\n\n原始数据："+key+":"+value);//输出原始的键值数据
 
                     if(is_int == 1){//开关，用于判断是否要开启-1、-0的操作
                         if (value.matches("[0-9]+")) {//用于判读参数的值是否为纯数字
@@ -603,6 +657,10 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                     }
 
                     int change = 0; //用于判断返回包长度是否一致、保存第一次请求响应的长度
+
+                    //****************************************
+                    // 循环payload
+                    //****************************************
                     for (String payload : payloads) {
                         int time_1 = 0,time_2 = 0;
 
@@ -615,7 +673,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                             }
                         }
 
-                        stdout.println(key+":"+value+payload);//输出添加payload的键和值
+                        //stdout.println(key+":"+value+payload);//输出添加payload的键和值
                         IHttpService iHttpService = baseRequestResponse.getHttpService();
 
                         //新的请求包
@@ -625,6 +683,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                             List<String> headers = helpers.analyzeRequest(baseRequestResponse).getHeaders();
                             if(is_add ==1) {
                                 //json格式
+                                stdout.println("json");
                                 String newBody = "{"; //json body的内容
 
                                 for (IParameter paras : paraList) {//循环所有参数，用来自定义json格式body做准备
@@ -648,27 +707,53 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                                 time_2 = (int) System.currentTimeMillis();
                             }else if (is_add ==2){
                                 //json嵌套
+                                //stdout.println("json嵌套");
+
                                 request_data = request_data.replaceAll("\r","");//burp2.x json自动格式美化处理
                                 request_data = request_data.replaceAll("\n","");//burp2.x json自动格式美化处理
 
                                 String[] request_data_temp = request_data.split(",\"");//用于临时保存切割的post体内容
-                                String request_data_body = "";String request_data_body_temp = "";//修改后的body和需要临时编辑的字符串
+                                String request_data_body = "";//连接字符串
+                                String request_data_body_temp = "";//修改后的body和需要临时编辑的字符串
+
 
                                 for(int i=0;i < request_data_temp.length;i++){
                                     if(i==json_count){//判断现在修改的参数
                                         request_data_body_temp = request_data_temp[i];
 
-
-                                        stdout.println(request_data_body_temp);
-                                        //空列表如："classLevels":[]，跳过处理
-                                        if(request_data_body_temp.contains(":[]")) {//判断是否为空列表
-                                            json_count += 1;
-                                            request_data_body += request_data_temp[i]+",";
-                                            i += 1;
-                                            request_data_body_temp = request_data_temp[i];
+                                        stdout.println("准备修改的值："+request_data_body_temp);
+                                        while (true){
+                                            //空列表如："test":[]跳过处理
+                                            if(request_data_body_temp.contains(":[]")) {
+                                                stdout.println(request_data_body_temp+"跳过");
+                                                request_data_body += "\""+request_data_temp[i]+",";//把跳过的字符串连接上
+                                                json_count += 1;
+                                                i += 1;
+                                                request_data_body_temp = request_data_temp[i];
+                                            }else {
+                                                break;
+                                            }
                                         }
 
+
+                                        //null、true、false等跳过处理
+                                        if(request_data_body_temp.toLowerCase().contains(":null") || request_data_body_temp.toLowerCase().contains(":true") || request_data_body_temp.toLowerCase().contains(":false")) {
+                                            stdout.println(request_data_body_temp+"跳过");
+                                            switch_para = 1;
+                                            break;
+                                        }
+
+
                                         if(request_data_body_temp.contains("\":")){
+
+                                            if(para.getName().equals(para_name)){
+                                                //处理json嵌套列表，这种情况只跑一次
+                                                stdout.println("json嵌套列表，这个参数处理过了，跳过");
+                                                json_count -= 1;
+                                                switch_para = 1;
+                                                break;
+                                            }
+
                                             //判断字符串中是否有":，如果有则为正常json内容
                                             Pattern p = Pattern.compile(".*:\\s?\\[?\\s?(.*?$)");
                                             Matcher m = p.matcher(request_data_body_temp);
@@ -678,39 +763,60 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                                             if(request_data_body_temp.contains("\"")){//判断内容是否为字符串
                                                 request_data_body_temp = request_data_temp[i];
                                                 //修改内容，添加payload
-                                                stdout.println("777777777777");
                                                 request_data_body_temp = request_data_body_temp.replaceAll("^(.*:.*?\")(.*?)(\"[^\"]*)$","$1$2"+payload+"$3");
                                                 stdout.println(request_data_body_temp);
-                                                request_data_body+= request_data_body_temp +",";
+                                                request_data_body+= "\""+request_data_body_temp +",";
                                             }else {
                                                 request_data_body_temp = request_data_temp[i];
-                                                //修改内容，添加payload
+                                                //修改内容，添加payload  纯数字
                                                 request_data_body_temp = request_data_body_temp.replaceAll("^(.*:.*?)(\\d*)([^\"\\d]*)$","$1\"$2"+payload+"\"$3");
-                                                request_data_body+= request_data_body_temp +",";
+                                                stdout.println(request_data_body_temp);
+                                                request_data_body+= "\""+request_data_body_temp +",";
                                             }
 
                                         }else {
+                                            stdout.println("处理过，无需处理");
+                                            switch_para = 1;
+                                            if(para.getName().equals(para_name)){
+                                                //处理json嵌套列表，这种情况只跑一次
+                                                stdout.println("json嵌套列表，已经处理过第一个值");
+                                            }
+                                            break;
+
+                                            /*
                                             //字符串中没有":，表示json格式中嵌套的列表
+
                                             if(request_data_body_temp.contains("\"")) {//判断内容是否为字符串
                                                 //修改内容，添加payload
                                                 request_data_body_temp = request_data_body_temp.replaceAll("^(\")(.*?)(\".*?)$","$1$2"+payload+"$3");
-                                                request_data_body+= request_data_body_temp +",";
+                                                request_data_body+= "\""+request_data_body_temp +",";
                                             }else {
                                                 //不是字符串，则为纯数字
                                                 request_data_body_temp = request_data_body_temp.replaceAll("^(\\d*)(.*?)$","\"$1"+payload+"\"$2");
-                                                request_data_body+= request_data_body_temp +",";
+                                                request_data_body+= "\""+request_data_body_temp +",";
                                             }
-
-
+                                            */
                                         }
                                         //stdout.println(request_data_body_temp);
 
 
                                     }else {
-                                        request_data_body += request_data_temp[i]+",";
+                                        request_data_body += "\""+request_data_temp[i]+",";
                                     }
                                 }
+
+                                if(switch_para == 1){
+                                    //跳过这个参数
+                                    break;
+                                }
+                                if(para.getName().equals(para_name)){
+                                    //处理json嵌套列表，这种情况只跑一次
+                                    stdout.println("json嵌套列表，已经处理过第一个值!!!!");
+                                }
+
+
                                 request_data_body = request_data_body.substring(0, request_data_body.length() - 1); //去除最后一个,
+                                request_data_body = request_data_body.substring(1,request_data_body.length()); //去除第一个"
 
                                 byte[] bodyByte = request_data_body.getBytes();
                                 byte[] new_Requests = helpers.buildHttpMessage(headers, bodyByte); //关键方法
@@ -720,6 +826,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
                             }
                         }else {
+                            stdout.println("普通格式");
                             //不是json格式
                             IParameter newPara = helpers.buildParameter(key,value + payload, para.getType()); //构造新的参数
                             byte[] newRequest = helpers.updateParameter(new_Request, newPara);//更新请求包的参数
@@ -764,10 +871,13 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
                         }
                         //把响应内容保存在log2中
-                        log2.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(requestResponse),helpers.analyzeRequest(requestResponse).getUrl(),key,value+payload,change_sign,temp_data,time_2-time_1,"end"));
+                        log2.add(new LogEntry(conut,toolFlag, callbacks.saveBuffersToTempFiles(requestResponse),helpers.analyzeRequest(requestResponse).getUrl(),key,value+payload,change_sign,temp_data,time_2-time_1,"end",helpers.analyzeResponse(requestResponse.getResponse()).getStatusCode()));
 
                     }
                 }
+                para_name = para.getName();//用于判断json嵌套里面有列表，列表中带值只跑一次
+                stdout.println(json_count);
+
             }
 
         //用于更新是否已经跑完所有payload的状态
@@ -782,7 +892,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         //BurpExtender.this.fireTableRowsInserted(log.size(), log.size());
         BurpExtender.this.fireTableDataChanged();
         //第一个表格 继续选中之前选中的值
-        BurpExtender.this.logTable.setRowSelectionInterval(BurpExtender.this.select_row-1,BurpExtender.this.select_row-1);
+        BurpExtender.this.logTable.setRowSelectionInterval(BurpExtender.this.select_row,BurpExtender.this.select_row);
 
 
 
@@ -877,7 +987,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         @Override
         public int getColumnCount()
         {
-            return 5;
+            return 6;
         }
 
         @Override
@@ -895,6 +1005,8 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                     return "变化";
                 case 4:
                     return "用时";
+                case 5:
+                    return "响应码";
                 default:
                     return "";
             }
@@ -923,6 +1035,8 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                     return logEntry2.change;
                 case 4:
                     return logEntry2.times;
+                case 5:
+                    return logEntry2.response_code;
                 default:
                     return "";
             }
@@ -1038,10 +1152,11 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         final String change;
         final String data_md5;
         final int times;
+        final int response_code;
         String state;
 
 
-        LogEntry(int id,int tool, IHttpRequestResponsePersisted requestResponse, URL url,String parameter,String value,String change,String data_md5,int times,String state)
+        LogEntry(int id,int tool, IHttpRequestResponsePersisted requestResponse, URL url,String parameter,String value,String change,String data_md5,int times,String state,int response_code)
         {
             this.id = id;
             this.tool = tool;
@@ -1053,6 +1168,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
             this.data_md5 = data_md5;
             this.times = times;
             this.state = state;
+            this.response_code = response_code;
         }
 
         public String setState(String state){
