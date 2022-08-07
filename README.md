@@ -29,6 +29,19 @@
 * 监控Proxy流量。
 * 监控Repeater流量。
 * 同个数据包只扫描一次，算法：`MD5(不带参数的url+参数名+POST/GET)`。
+* 支持白名单功能
+
+
+**********
+### 2022-8-7
+#### xia SQL 2.7
+* 修复2.6版本处理json格式致命错误
+* 优化json嵌套格式处理，基本上都能正确处理，除个别极端情况
+* 新增响应码列
+* 新增白名单功能。
+
+<img width="1431" alt="image" src="https://user-images.githubusercontent.com/30351807/183281150-453ac528-0da1-4f56-a290-dd7a6455ee15.png">
+
 
 
 **********
