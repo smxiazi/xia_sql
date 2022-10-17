@@ -31,6 +31,13 @@
 * 同个数据包只扫描一次，算法：`MD5(不带参数的url+参数名+POST/GET)`。
 * 支持白名单功能
 
+**********
+### 2022-10-17
+#### xia SQL 2.8
+* 新增自定义payload保存到本地，每次打开burp将会自动获取上次保存的payload。
+
+<img width="671" alt="image" src="https://user-images.githubusercontent.com/30351807/196190603-d2d49b42-9464-4308-bc91-dd695693c156.png">
+
 
 **********
 ### 2022-8-7
