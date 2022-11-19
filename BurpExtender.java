@@ -1,13 +1,13 @@
 package burp;
 
 
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.io.PrintWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,7 +79,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         this.stdout = new PrintWriter(callbacks.getStdout(), true);
         this.stdout.println("hello xia sql!");
         this.stdout.println("你好 欢迎使用 瞎注!");
-        this.stdout.println("version:2.7");
+        this.stdout.println("version:2.9");
 
 
 
@@ -90,7 +90,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
         helpers = callbacks.getHelpers();
 
         // set our extension name
-        callbacks.setExtensionName("xia SQL V2.7");
+        callbacks.setExtensionName("xia SQL V2.9");
 
         // create our UI
         SwingUtilities.invokeLater(new Runnable()
@@ -109,6 +109,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 JScrollPane scrollPane = new JScrollPane(logTable); //给列表添加滚动条
 
 
+
                 //test
                 JPanel jp=new JPanel();
                 JLabel jl=new JLabel("==>");    //创建一个标签
@@ -125,7 +126,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 jps.setLayout(new GridLayout(18, 1)); //六行一列
                 JLabel jls=new JLabel("插件名：瞎注 author：算命縖子");    //创建一个标签
                 JLabel jls_1=new JLabel("blog:www.nmd5.com");    //创建一个标签
-                JLabel jls_2=new JLabel("版本：xia SQL V2.7");    //创建一个标签
+                JLabel jls_2=new JLabel("版本：xia SQL V2.9");    //创建一个标签
                 JLabel jls_3=new JLabel("感谢名单：Moonlit、阿猫阿狗、Shincehor");    //创建一个标签
                 JCheckBox chkbox1=new JCheckBox("启动插件", true);    //创建指定文本和状态的复选框
                 JCheckBox chkbox2=new JCheckBox("监控Repeater");    //创建指定文本的复选框
@@ -136,7 +137,7 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                 JCheckBox chkbox6=new JCheckBox("自定义payload中空格url编码",true);    //创建指定文本的复选框
                 JCheckBox chkbox7=new JCheckBox("自定义payload中参数值置空");    //创建指定文本的复选框
                 JCheckBox chkbox8=new JCheckBox("测试Cookie");    //创建指定文本的复选框
-                JLabel jls_5=new JLabel("");    //创建一个标签
+                JLabel jls_5=new JLabel("如果需要多个域名加白请用,隔开");    //创建一个标签
                 JTextField textField = new JTextField("填写白名单域名");//白名单文本框
 
                 //chkbox4.setEnabled(false);//设置为不可以选择
@@ -147,7 +148,20 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
 
                 //自定义payload区
                 JPanel jps_2=new JPanel();
+                jps_2.setLayout(new GridLayout(1, 1)); //六行一列
                 JTextArea jta=new JTextArea("%df' and sleep(3)%23\n'and '1'='1",18,16);
+
+                //读取ini配置文件
+                try {
+                    BufferedReader in = new BufferedReader(new FileReader("xia_SQL_diy_payload.ini"));
+                    String str,str_data="";
+                    while ((str = in.readLine()) != null) {
+                        str_data += str+"\n";
+                    }
+                    jta.setText(str_data);
+                } catch (IOException e) {
+                }
+
                 //jta.setLineWrap(true);    //设置文本域中的文本为自动换行
                 jta.setForeground(Color.BLACK);    //设置组件的背景色
                 jta.setFont(new Font("楷体",Font.BOLD,16));    //修改字体样式
@@ -301,6 +315,13 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
                             JTextArea_data_1 = temp_data;
                         }else {
                             JTextArea_data_1 = jta.getText();
+                        }
+                        //写入ini配置文件
+                        try {
+                            BufferedWriter out = new BufferedWriter(new FileWriter("xia_SQL_diy_payload.ini"));
+                            out.write(JTextArea_data_1);
+                            out.close();
+                        } catch (IOException exception) {
                         }
                     }
                 });
@@ -502,10 +523,17 @@ public class BurpExtender extends AbstractTableModel implements IBurpExtender, I
             String temp_data =(String) temp_data_strarray[0];//获取问号前面的字符串
 
             //检测白名单
+            String[] white_URL_list = white_URL.split(",");
+            int white_swith = 0;
             if(white_switchs == 1){
-                if(temp_data.contains(white_URL)){
-                    this.stdout.println("白名单URL！"+temp_data);
-                }else {
+                white_swith = 0;
+                for(int i=0;i<white_URL_list.length;i++){
+                    if(temp_data.contains(white_URL_list[i])){
+                        this.stdout.println("白名单URL！"+temp_data);
+                        white_swith = 1;
+                    }
+                }
+                if(white_swith == 0) {
                     this.stdout.println("不是白名单URL！"+temp_data);
                     return;
                 }
