@@ -29,7 +29,22 @@
 * 监控Proxy流量。
 * 监控Repeater流量。
 * 同个数据包只扫描一次，算法：`MD5(不带参数的url+参数名+POST/GET)`。
-* 支持白名单功能
+* 支持白名单功能，若多个域名请用,隔开
+
+## 插件截图
+
+<img width="1568" alt="image" src="https://user-images.githubusercontent.com/30351807/202838510-c9c7399f-b377-41e0-ae17-93be9fb1f1cc.png">
+
+
+
+**********
+### 2022-11-19
+#### xia SQL 2.9
+* 支持多个域名白名单
+* 优化ui
+
+<img width="600" alt="image" src="https://user-images.githubusercontent.com/30351807/202838425-bdadb2c7-0cb3-4b83-8837-b0e203df2457.png">
+
 
 **********
 ### 2022-10-17
