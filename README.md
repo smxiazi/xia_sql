@@ -18,6 +18,7 @@
 ## 插件使用描述
 * 返回 `✔️` 代表两个单引号的长度和一个单引号的长度不一致，`表明可能存在注入`。
 * 返回 `✔️ ==> ？` 代表着 原始包的长度和两个单引号的长度相同且和一个单引号的长度不同，`表明很可能是注入`。
+* 返回 `Err` 代表响应包中含有数据库报错信息。
 * 返回 `diy payload` 代表自定义的payload。
 * 返回 `time > 3` 代表访问网站的时间大于3秒，可利用该功能配合自定义payload功能测试`时间盲注`。
 * 支持json格式，V1.9以上版本`已支持json多层嵌套`。
@@ -33,8 +34,18 @@
 
 ## 插件截图
 
-<img width="1568" alt="image" src="https://user-images.githubusercontent.com/30351807/202838510-c9c7399f-b377-41e0-ae17-93be9fb1f1cc.png">
+<img width="1526" alt="image" src="https://user-images.githubusercontent.com/30351807/217544602-fc770d5a-235d-4f2d-b636-c782a6c222c6.png">
 
+
+**********
+### 2023-2-8
+#### xia SQL 3.0
+* 新增匹配响应包是否有包含数据库报错关键字，如有将显示Err
+* 优化请求包的body内容为二进制时，过滤掉。
+
+<img width="1526" alt="image" src="https://user-images.githubusercontent.com/30351807/217544602-fc770d5a-235d-4f2d-b636-c782a6c222c6.png">
+
+<img width="300" alt="image" src="https://user-images.githubusercontent.com/30351807/217544699-1b4c3a9b-60d0-4068-b4ca-f6adaa2b5d83.png">
 
 
 **********
