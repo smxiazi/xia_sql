@@ -45,7 +45,7 @@
 
 <img width="1526" alt="image" src="https://user-images.githubusercontent.com/30351807/217544602-fc770d5a-235d-4f2d-b636-c782a6c222c6.png">
 
-<img width="300" alt="image" src="https://user-images.githubusercontent.com/30351807/217544699-1b4c3a9b-60d0-4068-b4ca-f6adaa2b5d83.png">
+<img width="500" alt="image" src="https://user-images.githubusercontent.com/30351807/217544699-1b4c3a9b-60d0-4068-b4ca-f6adaa2b5d83.png">
 
 
 **********
