@@ -36,6 +36,11 @@
 
 <img width="1526" alt="image" src="https://user-images.githubusercontent.com/30351807/217544602-fc770d5a-235d-4f2d-b636-c782a6c222c6.png">
 
+**********
+### 2023-2-10
+#### xia SQL 3.1
+* 更新数据库报错关键字。
+<img width="482" alt="image" src="https://user-images.githubusercontent.com/30351807/218068944-444a852c-4ac5-4303-ab7e-0242a9dec0bf.png">
 
 **********
 ### 2023-2-8
