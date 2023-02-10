@@ -40,11 +40,11 @@
 ### 2023-2-10
 #### xia SQL 3.1
 * 更新自定义数据库报错关键字。
-* 更新日志模式，里面输出的是哪条数据库报错关键字触发的日志。
+* 更新日志模式，里面输出的是哪条数据库报错关键字触发的。
 
 <img width="1538" alt="image" src="https://user-images.githubusercontent.com/30351807/218113665-4d0e5f33-6bf8-44d9-80ff-11a703f3f024.png">
 
-<img width="587" alt="image" src="https://user-images.githubusercontent.com/30351807/218113752-7c4d6865-145d-484b-9981-a7d829845edc.png">
+<img width="594" alt="image" src="https://user-images.githubusercontent.com/30351807/218115763-2e32a58f-e183-48b7-85e1-fc5d45e359c3.png">
 
 
 
