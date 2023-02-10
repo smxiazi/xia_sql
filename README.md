@@ -39,8 +39,14 @@
 **********
 ### 2023-2-10
 #### xia SQL 3.1
-* 更新数据库报错关键字。
-<img width="482" alt="image" src="https://user-images.githubusercontent.com/30351807/218068944-444a852c-4ac5-4303-ab7e-0242a9dec0bf.png">
+* 更新自定义数据库报错关键字。
+* 更新日志模式，里面输出的是哪条数据库报错关键字触发的日志。
+
+<img width="1538" alt="image" src="https://user-images.githubusercontent.com/30351807/218113665-4d0e5f33-6bf8-44d9-80ff-11a703f3f024.png">
+
+<img width="587" alt="image" src="https://user-images.githubusercontent.com/30351807/218113752-7c4d6865-145d-484b-9981-a7d829845edc.png">
+
+
 
 **********
 ### 2023-2-8
