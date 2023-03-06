@@ -37,6 +37,15 @@
 <img width="1526" alt="image" src="https://user-images.githubusercontent.com/30351807/217544602-fc770d5a-235d-4f2d-b636-c782a6c222c6.png">
 
 **********
+### 2023-3-6
+#### xia SQL 3.2
+* 优化左上的两个窗口可以在内部可伸缩
+* 启动自定义payload后，取消内置payload。
+
+<img width="1591" alt="image" src="https://user-images.githubusercontent.com/30351807/223004986-91c728db-3dde-4794-8792-49c73ce91b87.png">
+
+
+**********
 ### 2023-2-10
 #### xia SQL 3.1
 * 更新自定义数据库报错关键字。
